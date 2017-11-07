@@ -1,0 +1,19 @@
+Fitter Status : Successful - Thu Oct 26 14:27:08 2017
+Quartus II 64-Bit Version : 14.1.0 Build 186 12/03/2014 SJ Full Version
+Revision Name : AP9
+Top-level Entity Name : AP9
+Family : Cyclone V
+Device : 5CEBA4F23C7
+Timing Models : Final
+Logic utilization (in ALMs) : 788 / 18,480 ( 4 % )
+Total registers : 460
+Total pins : 26 / 224 ( 12 % )
+Total virtual pins : 0
+Total block memory bits : 413,952 / 3,153,920 ( 13 % )
+Total DSP Blocks : 0 / 66 ( 0 % )
+Total HSSI RX PCSs : 0
+Total HSSI PMA RX Deserializers : 0
+Total HSSI TX PCSs : 0
+Total HSSI PMA TX Serializers : 0
+Total PLLs : 0 / 4 ( 0 % )
+Total DLLs : 0 / 4 ( 0 % )
