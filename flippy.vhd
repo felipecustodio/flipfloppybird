@@ -31,10 +31,10 @@ ARCHITECTURE a OF game IS
 	-- Contador de tempo
 
 	-- Flippy
-	SIGNAL FLIPPY_POS   : STD_LOGIC_VECTOR(15 DOWNTO 0);
-	SIGNAL FLIPPY_POSA  : STD_LOGIC_VECTOR(15 DOWNTO 0);
-	SIGNAL FLIPPY_CHAR  : STD_LOGIC_VECTOR(7 DOWNTO 0);
-	SIGNAL FLIPPY_COR   : STD_LOGIC_VECTOR(3 DOWNTO 0);
+	SIGNAL FLIPPY_POS   : STD_LOGIC_VECTOR(15 DOWNTO 0); -- Variáveis são SIGNAL
+	SIGNAL FLIPPY_POSA  : STD_LOGIC_VECTOR(15 DOWNTO 0); -- Registradores construidos com Flip Flops
+	SIGNAL FLIPPY_CHAR  : STD_LOGIC_VECTOR(7 DOWNTO 0); -- Todos os processos conseguem ler
+	SIGNAL FLIPPY_COR   : STD_LOGIC_VECTOR(3 DOWNTO 0); -- Apenas um processo por vez por clock
 	SIGNAL FLIPPY_INC   : STD_LOGIC_VECTOR(7 DOWNTO 0);
 	SIGNAL FLIPPY_SINAL	: STD_LOGIC;
 	SIGNAL FLIPPY_DELAY : STD_LOGIC_VECTOR(31 DOWNTO 0);
@@ -45,6 +45,8 @@ BEGIN
 -- Processo do Flippy
 PROCESS (clk, reset)
 	
+	-- Variáveis do Processo VARIABLES
+
 	BEGIN
 	-- Reseta e começa o jogo
 	IF RESET = '1' THEN
@@ -101,7 +103,6 @@ BEGIN
 		VIDEOE <= x"00";
 		videoflag <= '0';
 		FLIPPY_POSA <= x"0000";
-		BolAPOSA <= x"0000";
 	ELSIF (clkvideo'event) and (clkvideo = '1') THEN
 		CASE VIDEOE IS
 			WHEN x"00" => -- Apaga Bolinha
@@ -140,7 +141,7 @@ BEGIN
 			
 			
 			
-			WHEN x"04" => -- Apaga Sapo
+			WHEN x"04" => -- Apaga Flippy
 				if(FLIPPY_POSA = FLIPPY_POS) then
 					VIDEOE <= x"00";
 				else
@@ -157,7 +158,7 @@ BEGIN
 			WHEN x"05" =>
 				videoflag <= '0';
 				VIDEOE <= x"06";
-			WHEN x"06" => -- Desenha Sapo
+			WHEN x"06" => -- Desenha Flippy
 				
 				vga_char(15 downto 12) <= "0000";
 				vga_char(11 downto 8) <= FLIPPY_COR;
