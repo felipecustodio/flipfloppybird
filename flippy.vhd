@@ -1,10 +1,5 @@
 -- *************************************************
--- JOGO Atropele a Bolinha 
--- INSTRU��ES:
--- As teclas W e S movimentam o Sapo
--- para cima e para baixo.
--- As teclas A e D movimentam o Sapo 
--- para esquerda e direita.
+-- FLIPPY FLOPPY BIRD
 -- *************************************************
 library IEEE;
 use  IEEE.STD_LOGIC_1164.all;
@@ -27,78 +22,68 @@ END  notepad ;
 
 ARCHITECTURE a OF notepad IS
 
-	-- Escreve na tela
+	-- Sinal de vídeo - escrever na tela
 	SIGNAL VIDEOE      : STD_LOGIC_VECTOR(7 DOWNTO 0);
-	-- Contador de tempo
 
-	-- Sapo
-	SIGNAL SAPOPOS   : STD_LOGIC_VECTOR(15 DOWNTO 0);
-	SIGNAL SAPOPOSA  : STD_LOGIC_VECTOR(15 DOWNTO 0);
-	SIGNAL SAPOCHAR  : STD_LOGIC_VECTOR(7 DOWNTO 0);
-	SIGNAL SAPOCOR   : STD_LOGIC_VECTOR(3 DOWNTO 0);
+	-- Flippy
+	SIGNAL FLIPPY_POS   : STD_LOGIC_VECTOR(15 DOWNTO 0);
+	SIGNAL FLIPPY_POSA  : STD_LOGIC_VECTOR(15 DOWNTO 0);
+	SIGNAL FLIPPY_CHAR  : STD_LOGIC_VECTOR(7 DOWNTO 0);
+	SIGNAL FLIPPY_COLOR : STD_LOGIC_VECTOR(3 DOWNTO 0);
 
-	-- Bolinha
-	SIGNAL BOLAPOS     : STD_LOGIC_VECTOR(15 DOWNTO 0);
-	SIGNAL BOLAPOSA    : STD_LOGIC_VECTOR(15 DOWNTO 0);
-	SIGNAL BOLACHAR    : STD_LOGIC_VECTOR(7 DOWNTO 0);
-	SIGNAL BOLACOR     : STD_LOGIC_VECTOR(3 DOWNTO 0);
-	SIGNAL INCBOLA     : STD_LOGIC_VECTOR(7 DOWNTO 0);
-	SIGNAL SINAL	    : STD_LOGIC;
-
-	--Delay do Sapo
+	-- Estado atual do Flippy
+	SIGNAL FLIPPY_STATE : STD_LOGIC_VECTOR(7 DOWNTO 0);
+	-- Delay do Flippy
 	SIGNAL DELAY1      : STD_LOGIC_VECTOR(31 DOWNTO 0);
-	--Delay da Bolinha
-	SIGNAL DELAY2      : STD_LOGIC_VECTOR(31 DOWNTO 0);
 
-	SIGNAL SAPOESTADO : STD_LOGIC_VECTOR(7 DOWNTO 0);
-	--Estados da Bolinha
-	SIGNAL B_ESTADO    : STD_LOGIC_VECTOR(7 DOWNTO 0);
 BEGIN
 
--- Sapo
+-- Flippy
 PROCESS (clk, reset)
 	
 	BEGIN
 		
 	IF RESET = '1' THEN
-		SAPOCHAR <= "00000001";
-		SAPOCOR <= "1111"; -- 1010 verde
-		SAPOPOS <= x"0294";
+		FLIPPY_CHAR <= "00000001";
+		FLIPPY_COLOR <= "1111"; -- Branco
+		FLIPPY_POS <= x"0294";
 		DELAY1 <= x"00000000";
-		SAPOESTADO <= x"00";
+		FLIPPY_STATE <= x"00";
 		
 	ELSIF (clk'event) and (clk = '1') THEN
 
-		CASE SAPOESTADO IS
-			WHEN x"00" => -- Estado movimenta Sapo segundo Teclado
+		CASE FLIPPY_STATE IS
+			
+
+			WHEN x"00" => -- Estado de movimentação
 			
 				-- Sempre caindo
-				IF (SAPOPOS < 1159) THEN   -- nao esta' na ultima linha
-					SAPOPOS <= SAPOPOS + x"28";  -- CAI 40
+				IF (FLIPPY_POS < 1159) THEN   -- não está na ultima linha
+					FLIPPY_POS <= FLIPPY_POS + x"28";  -- CAI 40
 				END IF;
 						
-				IF (SAPOPOS > 1159) THEN
-					SAPOCOR <= "1010";
-					SAPOPOS <= SAPOPOS - x"28";
+				IF (FLIPPY_POS > 1159) THEN -- bateu na última linha
+					FLIPPY_COLOR <= "1010";
+					FLIPPY_POS <= FLIPPY_POS - x"28"; -- SOBE 40
 				END IF;
 			
 				CASE key IS
 
 					WHEN x"20" => -- (ESPAÇO) (PULO)
-						IF (SAPOPOS > 39) THEN   -- nao esta' na primeira linha
-							SAPOPOS <= SAPOPOS - x"78";  -- SOBE 120
+						IF (FLIPPY_POS > 39) THEN   -- nao está na primeira linha
+							FLIPPY_POS <= FLIPPY_POS - x"78";  -- SOBE 120
 						END IF;
 
 					WHEN OTHERS =>
 				END CASE;
-				SAPOESTADO <= x"01";
+				FLIPPY_STATE <= x"01"; -- Ir para próximo estado (delay)
 
 			
-			WHEN x"01" => -- Delay para movimentar Sapo
+			WHEN x"01" => -- Delay para movimentar Flippy
 			 
 				IF DELAY1 >= x"00000FFF" THEN
 					DELAY1 <= x"00000000";
-					SAPOESTADO <= x"00";
+					FLIPPY_STATE <= x"00";
 				ELSE
 					DELAY1 <= DELAY1 + x"01";
 				END IF;
@@ -126,6 +111,8 @@ BEGIN
 	ELSIF (clk'event) and (clk = '1') THEN
 
 				CASE B_ESTADO iS
+					
+
 					WHEN x"00" =>
 						-- INCREMENTA A POS DA BOLA
 							IF (SINAL = '0') THEN BOLAPOS <= BOLAPOS + INCBOLA;
@@ -133,6 +120,7 @@ BEGIN
 							
 							B_ESTADO <= x"01";
 						
+					
 					WHEN x"01" => -- Bola esta' subindo e chegou na linha de cima : SINAL = 1
 						IF (BOLAPOS < 40) THEN
 							IF (INCBOLA = 41) THEN INCBOLA <= x"27"; SINAL <= '0'; END IF;
@@ -152,6 +140,7 @@ BEGIN
 
 						B_ESTADO <= x"03";
 	
+					
 					WHEN x"03" => -- Bola esta' indo para direita e chegou na extrema direita: SINAL = ? 
 						IF ((conv_integer(BOLAPOS) MOD 40) = 39) THEN
 							IF (INCBOLA = 39) THEN INCBOLA <= x"29"; SINAL <= '1'; END IF;
@@ -161,6 +150,7 @@ BEGIN
 
 						B_ESTADO <= x"04";
 	
+					
 					WHEN x"04" => -- Bola esta' indo para esquerda e chegou na extrema esquerda: SINAL = ? 
 						IF ((conv_integer(BOLAPOS) MOD 40) = 0) THEN
 							IF (INCBOLA = 39) THEN INCBOLA <= x"29"; SINAL <= '0'; END IF;
@@ -198,10 +188,13 @@ BEGIN
 	IF RESET = '1' THEN
 		VIDEOE <= x"00";
 		videoflag <= '0';
-		SAPOPOSA <= x"0000";
+		FLIPPY_POSA <= x"0000";
 		BolAPOSA <= x"0000";
+	
 	ELSIF (clkvideo'event) and (clkvideo = '1') THEN
 		CASE VIDEOE IS
+			
+
 			WHEN x"00" => -- Apaga Bolinha
 				if(BOLAPOSA = BOLAPOS) then
 					VIDEOE <= x"04";
@@ -217,9 +210,13 @@ BEGIN
 					VIDEOE <= x"01";
 					
 				end if;
+			
+
 			WHEN x"01" =>
 				videoflag <= '0';
 				VIDEOE <= x"02";
+			
+
 			WHEN x"02" => -- Desenha Bolinha
 							
 				vga_char(15 downto 12) <= "0000";
@@ -232,14 +229,15 @@ BEGIN
 				BOLAPOSA <= BOLAPOS;   -- Pos Anterior = Pos Atual
 				videoflag <= '1';
 				VIDEOE <= x"03";
+			
+
 			WHEN x"03" =>
 				videoflag <= '0';
 				VIDEOE <= x"04";
 			
 			
-			
-			WHEN x"04" => -- Apaga Sapo
-				if(SAPOPOSA = SAPOPOS) then
+			WHEN x"04" => -- Apaga Flippy
+				if(FLIPPY_POSA = FLIPPY_POS) then
 					VIDEOE <= x"00";
 				else
 									
@@ -247,32 +245,41 @@ BEGIN
 					vga_char(11 downto 8) <= "0000";
 					vga_char(7 downto 0) <= "00000000";
 					
-					vga_pos(15 downto 0)	<= SAPOPOSA;
+					vga_pos(15 downto 0)	<= FLIPPY_POSA;
 					
 					videoflag <= '1';
 					VIDEOE <= x"05";
 				end if;
+
+			
 			WHEN x"05" =>
 				videoflag <= '0';
 				VIDEOE <= x"06";
-			WHEN x"06" => -- Desenha Sapo
-				
+
+			
+			WHEN x"06" => -- Desenha Flippy
 				vga_char(15 downto 12) <= "0000";
-				vga_char(11 downto 8) <= SAPOCOR;
-				vga_char(7 downto 0) <= SAPOCHAR;
+				vga_char(11 downto 8) <= FLIPPY_COLOR;
+				vga_char(7 downto 0) <= FLIPPY_CHAR;
 				
-				vga_pos(15 downto 0)	<= SAPOPOS;
+				vga_pos(15 downto 0)	<= FLIPPY_POS;
 				
-				SAPOPOSA <= SAPOPOS;
+				FLIPPY_POSA <= FLIPPY_POS;
 				videoflag <= '1';
 				VIDEOE <= x"07";
+			
+
 			WHEN x"07" =>
 				videoflag <= '0';
 				VIDEOE <= x"00";
 			
+			
+
 			WHEN OTHERS =>
 				videoflag <= '0';
 				VIDEOE <= x"00";	
+		
+
 		END CASE;
 	END IF;
 END PROCESS;
