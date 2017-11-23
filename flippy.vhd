@@ -17,10 +17,8 @@ ENTITY notepad IS
 		clkvideo, clk, reset  : IN	STD_LOGIC;		
 		videoflag	: out std_LOGIC;
 		vga_pos		: out STD_LOGIC_VECTOR(15 downto 0);
-		vga_char		: out STD_LOGIC_VECTOR(15 downto 0);
-		
+		vga_char	: out STD_LOGIC_VECTOR(15 downto 0);
 		key			: IN 	STD_LOGIC_VECTOR(7 DOWNTO 0)	-- teclado
-		
 		);
 
 END  notepad ;
@@ -109,6 +107,7 @@ PROCESS (clk, reset)
 
 END PROCESS;
 
+<<<<<<< Updated upstream
 -- Bolinha
 PROCESS (clk, reset)
 
@@ -167,28 +166,11 @@ BEGIN
 							IF (INCBOLA = 1) THEN INCBOLA <= x"01"; SINAL <= '0'; END IF;
 							IF (INCBOLA = 41) THEN INCBOLA <= x"27"; SINAL <= '1'; END IF;
 						end if;							
+=======
+-- Cenário
+PROCESS ()
+>>>>>>> Stashed changes
 
-						B_ESTADO <= x"FF";
-
-					WHEN x"FF" =>  -- Delay da Bola
-			
-						IF DELAY2 >= x"00000FFF" THEN 
-							DELAY2 <= x"00000000";
-							B_ESTADO <= x"00";
-						ELSE
-							DELAY2 <= DELAY2 + x"01";
-						END IF;
-			
-	
-	
-					WHEN OTHERS =>
-						B_ESTADO <= x"00";
-					
-				END CASE;
-				
-
-	END IF;
-	
 END PROCESS;
 
 -- Escreve na Tela
@@ -198,13 +180,19 @@ BEGIN
 	IF RESET = '1' THEN
 		VIDEOE <= x"00";
 		videoflag <= '0';
+<<<<<<< Updated upstream
 		SAPOPOSA <= x"0000";
 		BolAPOSA <= x"0000";
 	ELSIF (clkvideo'event) and (clkvideo = '1') THEN
 		CASE VIDEOE IS
+=======
+		FLIPPY_POSA <= x"0000";
+	
+	ELSIF (clkvideo'event) and (clkvideo = '1') THEN
+		CASE VIDEOE IS			
+
+>>>>>>> Stashed changes
 			WHEN x"00" => -- Apaga Bolinha
-				if(BOLAPOSA = BOLAPOS) then
-					VIDEOE <= x"04";
 				else
 										
 						vga_char(15 downto 12) <= "0000";
