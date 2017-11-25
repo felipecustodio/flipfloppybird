@@ -42,8 +42,73 @@ ARCHITECTURE a OF notepad IS
 	-------------------------------------------------
 	-- Cenário
 
+	-- Vetores gerados pelo script bmp2vhdlvector.py
+	map_line0: std_logic_vector(40 downto 0);
+	map_line1: std_logic_vector(40 downto 0);
+	map_line2: std_logic_vector(40 downto 0);
+	map_line3: std_logic_vector(40 downto 0);
+	map_line4: std_logic_vector(40 downto 0);
+	map_line5: std_logic_vector(40 downto 0);
+	map_line6: std_logic_vector(40 downto 0);
+	map_line7: std_logic_vector(40 downto 0);
+	map_line8: std_logic_vector(40 downto 0);
+	map_line9: std_logic_vector(40 downto 0);
+	map_line10: std_logic_vector(40 downto 0);
+	map_line11: std_logic_vector(40 downto 0);
+	map_line12: std_logic_vector(40 downto 0);
+	map_line13: std_logic_vector(40 downto 0);
+	map_line14: std_logic_vector(40 downto 0);
+	map_line15: std_logic_vector(40 downto 0);
+	map_line16: std_logic_vector(40 downto 0);
+	map_line17: std_logic_vector(40 downto 0);
+	map_line18: std_logic_vector(40 downto 0);
+	map_line19: std_logic_vector(40 downto 0);
+	map_line20: std_logic_vector(40 downto 0);
+	map_line21: std_logic_vector(40 downto 0);
+	map_line22: std_logic_vector(40 downto 0);
+	map_line23: std_logic_vector(40 downto 0);
+	map_line24: std_logic_vector(40 downto 0);
+	map_line25: std_logic_vector(40 downto 0);
+	map_line26: std_logic_vector(40 downto 0);
+	map_line27: std_logic_vector(40 downto 0);
+	map_line28: std_logic_vector(40 downto 0);
+	map_line29: std_logic_vector(40 downto 0);
+	map_line0 <= "0000000000000000001111111000000000000000"
+	map_line1 <= "0000000000000000001111111000000000000000"
+	map_line2 <= "0000000000000000001111111000000000000000"
+	map_line3 <= "0000000000000000001111111000000000000000"
+	map_line4 <= "0000000000000000001111111000000000000000"
+	map_line5 <= "0000000000000000001111111000000000000000"
+	map_line6 <= "0000000000000000001111111000000000000000"
+	map_line7 <= "0000000000000000000000000000000000000000"
+	map_line8 <= "0000000000000000000000000000000000000000"
+	map_line9 <= "0000000000000000000000000000000000000000"
+	map_line10 <= "0000000000000000000000000000000000000000"
+	map_line11 <= "0000000000000000000000000000000000000000"
+	map_line12 <= "0000000000000000000000000000000000000000"
+	map_line13 <= "0000000000000000000000000000000000000000"
+	map_line14 <= "0000000000000000000000000000000000000000"
+	map_line15 <= "0000000000000000000000000000000000000000"
+	map_line16 <= "0000000000000000001111111000000000000000"
+	map_line17 <= "0000000000000000001111111000000000000000"
+	map_line18 <= "0000000000000000001111111000000000000000"
+	map_line19 <= "0000000000000000001111111000000000000000"
+	map_line20 <= "0000000000000000001111111000000000000000"
+	map_line21 <= "0000000000000000001111111000000000000000"
+	map_line22 <= "0000000000000000001111111000000000000000"
+	map_line23 <= "0000000000000000001111111000000000000000"
+	map_line24 <= "0000000000000000001111111000000000000000"
+	map_line25 <= "0000000000000000001111111000000000000000"
+	map_line26 <= "0000000000000000001111111000000000000000"
+	map_line27 <= "0000000000000000001111111000000000000000"
+	map_line28 <= "0000000000000000001111111000000000000000"
+	map_line29 <= "0000000000000000001111111000000000000000"
 
+	-- Posição atual de onde começa o desenho
+	SIGNAL MAP_AUX : STD_LOGIC_VECTOR(15 DOWNTO 0);
 
+	-- Velocidade de movimento do mapa
+	SIGNAL MAP_SPEED : STD_LOGIC_VECTOR(4 DOWNTO 0);
 
 
 
