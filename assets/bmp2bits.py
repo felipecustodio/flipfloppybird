@@ -1,3 +1,7 @@
+'''
+Show bitmap image in binary representation
+'''
+
 import os
 import sys
 from scipy import misc

@@ -20,9 +20,12 @@ END  notepad ;
 
 ARCHITECTURE a OF notepad IS
 
+	-------------------------------------------------
 	-- Sinal de vídeo - escrever na tela
 	SIGNAL VIDEOE      : STD_LOGIC_VECTOR(7 DOWNTO 0);
+	-------------------------------------------------
 
+	-------------------------------------------------
 	-- Flippy
 	SIGNAL FLIPPY_POS   : STD_LOGIC_VECTOR(15 DOWNTO 0);
 	SIGNAL FLIPPY_POSA  : STD_LOGIC_VECTOR(15 DOWNTO 0);
@@ -33,6 +36,21 @@ ARCHITECTURE a OF notepad IS
 	SIGNAL FLIPPY_STATE : STD_LOGIC_VECTOR(7 DOWNTO 0);
 	-- Delay do Flippy
 	SIGNAL DELAY1      : STD_LOGIC_VECTOR(31 DOWNTO 0);
+	-------------------------------------------------
+
+
+	-------------------------------------------------
+	-- Cenário
+
+
+
+
+
+
+
+	-------------------------------------------------
+
+
 
 BEGIN
 
