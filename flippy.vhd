@@ -55,19 +55,6 @@ PROCESS (clk, reset)
 
 		CASE FLIPPY_STATE IS
 
-		-- 																		## ESTADOS ##
-		--				 --------							--------
-		--				|	       |    0      |				|
- 		--			  |	 CAIR  | ------->	 |  DELAY	|
-		--        |  (00)  | <-------	 |	(02)	|
-		--	  		 --------							--------
-		-- 						|											^
-		--						| 1			 --------			|
-		--						|----->	|	       |----|
-		--									  |	 CAIR  |
-		--      				 		  |  (01)  |
-		--	  								 --------
-
 			-- ## ESTADO PARA ANALISAR O MOVIMENTO DE DESCIDA FLIPPY
 			WHEN x"00" => -- ESTADO 0: DESCIDA
 
@@ -107,7 +94,7 @@ PROCESS (clk, reset)
 				IF (FLIPPY_POS > 195) AND (FLIPPY_FLAG = 0) THEN   -- NAO ESTA NAS 5 PRIMEIRAS LINHAS
 					FLIPPY_POS <= FLIPPY_POS - x"00C8";  -- SOBE 200
 				ELSE
-				 	FLIPPY PULOU MAIS DO QUE DEVERIA PULAR, ENTAO JA PODE SER CONSIDERADO MORTO
+				-- FLIPPY PULOU MAIS DO QUE DEVERIA PULAR, ENTAO MORRE
 					FLIPPY_FLAG <= 1; -- MORTO
 				-- ######### IR PARA O ESTADO "GAME OVER" ####################
 					-- PARAR DE CAIR SOMENTE COM MOVIMENTO DE PULO
