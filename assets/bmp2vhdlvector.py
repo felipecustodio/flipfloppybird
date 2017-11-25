@@ -1,3 +1,7 @@
+'''
+Convert bitmap image into STD_LOGIC_VECTORs
+'''
+
 import os
 import sys
 from scipy import misc
@@ -9,11 +13,23 @@ if (len(sys.argv) < 2):
 path = sys.argv[1]
 image = misc.imread(path, flatten = 1)
 
+# get bits
+lines = {}
+i = 0
 for line in image:
+	lines[i] = []
 	for bit in line:
 		if (bit == 0):
-			print(1, end='')
+			lines[i].append(1)
 		if (bit == 255):
-			print(0, end='')
-	print('')
+			lines[i].append(0)
+	i += 1
 
+# declare vectors
+for line in lines:
+	print("map_line%d: std_logic_vector(%d downto 0);" % (line, len(lines)))
+
+# fill vectors
+for line in lines:
+	value = str(''.join(map(str,lines[line])))
+	print("map_line%d <= \"%s\"""" % (line, value))
