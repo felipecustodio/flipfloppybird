@@ -1,5 +1,7 @@
 -- *************************************************
 -- FLIPPY FLOPPY BIRD
+-- Gabriel Henrique Scalici
+-- Felipe Scrochio Custódio
 -- *************************************************
 library IEEE;
 use  IEEE.STD_LOGIC_1164.all;
@@ -35,9 +37,9 @@ ARCHITECTURE a OF notepad IS
 	-- Estado atual do Flippy
 	SIGNAL FLIPPY_STATE : STD_LOGIC_VECTOR(7 DOWNTO 0);
 	-- Delay do Flippy
-	SIGNAL DELAY1      : STD_LOGIC_VECTOR(31 DOWNTO 0);
+	SIGNAL DELAY1       : STD_LOGIC_VECTOR(31 DOWNTO 0);
 	-------------------------------------------------
-
+ 
 
 	-------------------------------------------------
 	-- Cenário
@@ -110,24 +112,30 @@ ARCHITECTURE a OF notepad IS
 	-- Velocidade de movimento do mapa
 	SIGNAL MAP_SPEED : STD_LOGIC_VECTOR(4 DOWNTO 0);
 
+	-- Estado
+	SIGNAL MAP_STATE : STD_LOGIC_VECTOR(7 DOWNTO 0);
 
-
+	-- Delay
+	SIGNAL DELAY2 : STD_LOGIC_VECTOR(31 DOWNTO 0);
 
 	-------------------------------------------------
 
 
-
+-------------------------------------------------
+-- GAME LOOP
+-------------------------------------------------
 BEGIN
 
--- Flippy
+-------------------------------------------------
+-- FLIPPY
+-------------------------------------------------
 PROCESS (clk, reset)
 	
 	BEGIN
 		
 	IF RESET = '1' THEN
-		FLIPPY_CHAR <= "00000001";
-		FLIPPY_COLOR <= "1111"; -- Branco
-		FLIPPY_POS <= x"0294";
+		
+		MAP_AUX <= x"00000000"
 		DELAY1 <= x"00000000";
 		FLIPPY_STATE <= x"00";
 		
@@ -175,76 +183,49 @@ PROCESS (clk, reset)
 
 END PROCESS;
 
-<<<<<<< Updated upstream
--- Bolinha
+-------------------------------------------------
+-- MAP
+-------------------------------------------------
 PROCESS (clk, reset)
 
-BEGIN
+BEGIN 
 		
 	IF RESET = '1' THEN
-		BOLACHAR <= "00000010";
-		BOLACOR <= "1001"; -- 1001 Vermelho
-		BOLAPOS <= x"006E";
-		INCBOLA <= x"29";
-		SINAL <= '0';	
-		DELAY2 <= x"00000000";
-		B_ESTADO <= x"00";
-		
+		MAP_AUX <= x"00"; -- Resetar posição de desenho
+		MAP_STATE <= x"00"; -- Resetar estado
+		DELAY2 <= x"00000000"; -- Resetar delay
+
 	ELSIF (clk'event) and (clk = '1') THEN
 
-				CASE B_ESTADO iS
-					
+		CASE MAP_STATE IS
+			
+			WHEN x"00" => -- Estado de movimentação
+				
+				MAP_AUX <= MAP_AUX + MAP_SPEED; -- Mover cenário para esquerda	
 
-					WHEN x"00" =>
-						-- INCREMENTA A POS DA BOLA
-							IF (SINAL = '0') THEN BOLAPOS <= BOLAPOS + INCBOLA;
-							ELSE BOLAPOS <= BOLAPOS - INCBOLA; END IF;
-							
-							B_ESTADO <= x"01";
-						
-					
-					WHEN x"01" => -- Bola esta' subindo e chegou na linha de cima : SINAL = 1
-						IF (BOLAPOS < 40) THEN
-							IF (INCBOLA = 41) THEN INCBOLA <= x"27"; SINAL <= '0'; END IF;
-							IF (INCBOLA = 40) THEN INCBOLA <= x"28"; SINAL <= '0'; END IF;
-							IF (INCBOLA = 39) THEN INCBOLA <= x"29"; SINAL <= '0'; END IF;
-						end if;							
+				-- Checar por colisões
 
-						B_ESTADO <= x"02";
+				MAP_STATE <= x"01"; -- Ir para próximo estado (delay)
 
+			WHEN x"01" => -- Delay
+			 	-- Mexer com esses valores
+				IF DELAY2 >= x"00000FFF" THEN
+					DELAY2 <= x"00000000";
+					MAP_STATE <= x"00";
+				ELSE
+					DELAY2 <= DELAY2 + x"01";
+				END IF;
+				
+			WHEN OTHERS =>
+		END CASE;
 
-					WHEN x"02" => -- Bola esta' descendo e chegou na linha de baixo : SINAL = 0
-						IF (BOLAPOS > 1159) THEN
-							IF (INCBOLA = 41) THEN INCBOLA <= x"27"; SINAL <= '1'; END IF;
-							IF (INCBOLA = 40) THEN INCBOLA <= x"28"; SINAL <= '1'; END IF;
-							IF (INCBOLA = 39) THEN INCBOLA <= x"29"; SINAL <= '1'; END IF;
-						end if;
-
-						B_ESTADO <= x"03";
-	
-					
-					WHEN x"03" => -- Bola esta' indo para direita e chegou na extrema direita: SINAL = ? 
-						IF ((conv_integer(BOLAPOS) MOD 40) = 39) THEN
-							IF (INCBOLA = 39) THEN INCBOLA <= x"29"; SINAL <= '1'; END IF;
-							IF (INCBOLA = 1) THEN INCBOLA <= x"01"; SINAL <= '1'; END IF;
-							IF (INCBOLA = 41) THEN INCBOLA <= x"27"; SINAL <= '0'; END IF;
-						end if;							
-
-						B_ESTADO <= x"04";
-	
-					
-					WHEN x"04" => -- Bola esta' indo para esquerda e chegou na extrema esquerda: SINAL = ? 
-						IF ((conv_integer(BOLAPOS) MOD 40) = 0) THEN
-							IF (INCBOLA = 39) THEN INCBOLA <= x"29"; SINAL <= '0'; END IF;
-							IF (INCBOLA = 1) THEN INCBOLA <= x"01"; SINAL <= '0'; END IF;
-							IF (INCBOLA = 41) THEN INCBOLA <= x"27"; SINAL <= '1'; END IF;
-						end if;							
--- Cenário
-PROCESS ()
+	END IF;
 
 END PROCESS;
 
--- Escreve na Tela
+-------------------------------------------------
+-- VIDEO LOOP
+-------------------------------------------------
 PROCESS (clkvideo, reset)
 
 BEGIN
