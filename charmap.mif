@@ -14,7 +14,7 @@ CONTENT BEGIN
 -- Costuma-se deixar o primeiro simbolo sempre preto
 	[0..7]  :   00000000;
 
--- Flippy
+-- Flippy Contorno
 	  8  :   00111000;
 	  9  :   01100100;
 	 10  :   10001010;
@@ -23,6 +23,8 @@ CONTENT BEGIN
 	 13  :   01100100;
 	 14  :   00111000;
 	 15  :   00000000;
+
+-- Flippy Preenchimento
 
 -- Moeda
 	 16  :   00000000;
