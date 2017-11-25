@@ -18,7 +18,7 @@ image = misc.imread(path, flatten = 1)
 
 start_index = int(sys.argv[2])
 for line in image:
-	print("%d : " % (start_index), end='')
+	print("%d  :   " % (start_index), end='')
 	for bit in line:
 		if (bit == 0):
 			print(1, end='')
