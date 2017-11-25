@@ -1,5 +1,8 @@
 '''
 Convert bitmap image into STD_LOGIC_VECTORs
+
+Copying to clipboard:
+python bmp2vhdlvector.py image | xclip -selection c  
 '''
 
 import os
@@ -27,7 +30,7 @@ for line in image:
 
 # declare vectors
 for line in lines:
-	print("map_line%d: std_logic_vector(%d downto 0);" % (line, len(lines)))
+	print("map_line%d: std_logic_vector(%d downto 0);" % (line, len(lines[line])))
 
 # fill vectors
 for line in lines:

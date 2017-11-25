@@ -1,5 +1,8 @@
 '''
 Show bitmap image in binary representation
+
+Copying to clipboard:
+python bmp2bits.py image | xclip -selection c  
 '''
 
 import os
