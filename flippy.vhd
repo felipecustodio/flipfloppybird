@@ -12,10 +12,10 @@ ENTITY notepad IS
 
 	PORT(
 		clkvideo, clk, reset  : IN	STD_LOGIC;
-		videoflag	: out std_LOGIC;
-		vga_pos		: out STD_LOGIC_VECTOR(15 downto 0);
-		vga_char	: out STD_LOGIC_VECTOR(15 downto 0);
-		key			: IN 	STD_LOGIC_VECTOR(7 DOWNTO 0)	-- teclado
+		videoflag	: out std_LOGIC; 
+		vga_pos		: out STD_LOGIC_VECTOR(15 downto 0); -- posiçao na tela
+		vga_char	: out STD_LOGIC_VECTOR(15 downto 0); -- charmap
+		key			: IN 	STD_LOGIC_VECTOR(7 DOWNTO 0) -- teclado
 		);
 
 END  notepad ;
@@ -302,7 +302,7 @@ BEGIN
 					videoflag <= '1';
 					VIDEOE <= x"01";
 
-				end if;
+				END IF;
 			
 			WHEN x"01" =>
 				videoflag <= '0';
@@ -313,7 +313,6 @@ BEGIN
 				vga_char(15 downto 12) <= "0000";
 				vga_char(11 downto 8) <= BOLACOR;
 				vga_char(7 downto 0) <= BOLACHAR;
-
 
 				vga_pos(15 downto 0)	<= BOLAPOS;
 
@@ -340,7 +339,7 @@ BEGIN
 					
 					videoflag <= '1';
 					VIDEOE <= x"05";
-				end if;
+				END IF;
 
 			WHEN x"05" =>
 				videoflag <= '0';
