@@ -12,9 +12,9 @@ ENTITY notepad IS
 
 	PORT(
 		clkvideo, clk, reset  : IN	STD_LOGIC;
-		videoflag	: out std_LOGIC;
-		vga_pos		: out STD_LOGIC_VECTOR(15 downto 0);
-		vga_char	: out STD_LOGIC_VECTOR(15 downto 0);
+		videoflag	: out std_LOGIC; -- ligar desenho
+		vga_pos		: out STD_LOGIC_VECTOR(15 downto 0); -- posição na tela
+		vga_char	: out STD_LOGIC_VECTOR(15 downto 0); -- charmap a ser desenhado
 		key			: IN 	STD_LOGIC_VECTOR(7 DOWNTO 0)	-- teclado
 		);
 
@@ -42,75 +42,12 @@ ARCHITECTURE a OF notepad IS
 
 	-------------------------------------------------
 	-- Cenário
-
-	-- Vetores gerados pelo script bmp2vhdlvector.py
-	SIGNAL map_line0: std_logic_vector(40 downto 0);
-	SIGNAL map_line1: std_logic_vector(40 downto 0);
-	SIGNAL map_line2: std_logic_vector(40 downto 0);
-	SIGNAL map_line3: std_logic_vector(40 downto 0);
-	SIGNAL map_line4: std_logic_vector(40 downto 0);
-	SIGNAL map_line5: std_logic_vector(40 downto 0);
-	SIGNAL map_line6: std_logic_vector(40 downto 0);
-	SIGNAL map_line7: std_logic_vector(40 downto 0);
-	SIGNAL map_line8: std_logic_vector(40 downto 0);
-	SIGNAL map_line9: std_logic_vector(40 downto 0);
-	SIGNAL map_line10: std_logic_vector(40 downto 0);
-	SIGNAL map_line11: std_logic_vector(40 downto 0);
-	SIGNAL map_line12: std_logic_vector(40 downto 0);
-	SIGNAL map_line13: std_logic_vector(40 downto 0);
-	SIGNAL map_line14: std_logic_vector(40 downto 0);
-	SIGNAL map_line15: std_logic_vector(40 downto 0);
-	SIGNAL map_line16: std_logic_vector(40 downto 0);
-	SIGNAL map_line17: std_logic_vector(40 downto 0);
-	SIGNAL map_line18: std_logic_vector(40 downto 0);
-	SIGNAL map_line19: std_logic_vector(40 downto 0);
-	SIGNAL map_line20: std_logic_vector(40 downto 0);
-	SIGNAL map_line21: std_logic_vector(40 downto 0);
-	SIGNAL map_line22: std_logic_vector(40 downto 0);
-	SIGNAL map_line23: std_logic_vector(40 downto 0);
-	SIGNAL map_line24: std_logic_vector(40 downto 0);
-	SIGNAL map_line25: std_logic_vector(40 downto 0);
-	SIGNAL map_line26: std_logic_vector(40 downto 0);
-	SIGNAL map_line27: std_logic_vector(40 downto 0);
-	SIGNAL map_line28: std_logic_vector(40 downto 0);
-	SIGNAL map_line29: std_logic_vector(40 downto 0);
-	map_line0 <= "0000000000000000001111111000000000000000"
-	map_line1 <= "0000000000000000001111111000000000000000"
-	map_line2 <= "0000000000000000001111111000000000000000"
-	map_line3 <= "0000000000000000001111111000000000000000"
-	map_line4 <= "0000000000000000001111111000000000000000"
-	map_line5 <= "0000000000000000001111111000000000000000"
-	map_line6 <= "0000000000000000001111111000000000000000"
-	map_line7 <= "0000000000000000000000000000000000000000"
-	map_line8 <= "0000000000000000000000000000000000000000"
-	map_line9 <= "0000000000000000000000000000000000000000"
-	map_line10 <= "0000000000000000000000000000000000000000"
-	map_line11 <= "0000000000000000000000000000000000000000"
-	map_line12 <= "0000000000000000000000000000000000000000"
-	map_line13 <= "0000000000000000000000000000000000000000"
-	map_line14 <= "0000000000000000000000000000000000000000"
-	map_line15 <= "0000000000000000000000000000000000000000"
-	map_line16 <= "0000000000000000001111111000000000000000"
-	map_line17 <= "0000000000000000001111111000000000000000"
-	map_line18 <= "0000000000000000001111111000000000000000"
-	map_line19 <= "0000000000000000001111111000000000000000"
-	map_line20 <= "0000000000000000001111111000000000000000"
-	map_line21 <= "0000000000000000001111111000000000000000"
-	map_line22 <= "0000000000000000001111111000000000000000"
-	map_line23 <= "0000000000000000001111111000000000000000"
-	map_line24 <= "0000000000000000001111111000000000000000"
-	map_line25 <= "0000000000000000001111111000000000000000"
-	map_line26 <= "0000000000000000001111111000000000000000"
-	map_line27 <= "0000000000000000001111111000000000000000"
-	map_line28 <= "0000000000000000001111111000000000000000"
-	map_line29 <= "0000000000000000001111111000000000000000"
-
-
+	
 	-- Posição atual de onde começa o desenho
-	SIGNAL MAP_AUX : STD_LOGIC_VECTOR(15 DOWNTO 0);
+	SIGNAL MAP_AUX : STD_LOGIC_VECTOR(7 DOWNTO 0);
 
 	-- Velocidade de movimento do mapa
-	SIGNAL MAP_SPEED : STD_LOGIC_VECTOR(4 DOWNTO 0);
+	SIGNAL MAP_SPEED : STD_LOGIC_VECTOR(7 DOWNTO 0);
 
 	-- Estado
 	SIGNAL MAP_STATE : STD_LOGIC_VECTOR(7 DOWNTO 0);
@@ -136,10 +73,10 @@ PROCESS (clk, reset)
 	IF RESET = '1' THEN
 		FLIPPY_CHAR <= "00000001";
 		FLIPPY_COLOR <= "1111"; -- Branco
-		FLIPPY_POS <= x"0294";
+		FLIPPY_POS <= x"0261";
 		DELAY1 <= x"00000000";
 		FLIPPY_STATE <= x"00";
-		FLIPPY_FLAG <= x"00"; -- PARA SABER QUANDO ACABAR O JOGO 0: VIVO/ 1: MORTO
+		FLIPPY_FLAG <= x"00"; -- 0: VIVO / 1: MORTO
 
 	ELSIF (clk'event) and (clk = '1') THEN
 
@@ -172,7 +109,8 @@ PROCESS (clk, reset)
 					-- Resetar jogo
 					WHEN x"0D" => -- ENTER = RESET
 						FLIPPY_COLOR <= "1111"; -- Branco
-						FLIPPY_POS <= x"0294";
+						FLIPPY_CHAR <= "00000001";
+						FLIPPY_POS <= x"0261";
 						DELAY1 <= x"00000000";
 						FLIPPY_STATE <= x"00";
 						FLIPPY_FLAG <= x"00"; -- PARA SABER QUANDO ACABAR O JOGO 0: VIVO / 1: MORTO
@@ -182,7 +120,7 @@ PROCESS (clk, reset)
 
 			WHEN x"02" => -- Delay
 				-- Delay máximo, voltar à ação
-				IF DELAY1 >= x"0000FFFF" THEN
+				IF DELAY1 >=  x"00000EFF" THEN
 					DELAY1 <= x"00000000";
 					FLIPPY_STATE <= x"00";
 				ELSE
@@ -191,6 +129,7 @@ PROCESS (clk, reset)
 				END IF;
 
 			WHEN x"03" => -- Estado Game Over
+				FLIPPY_CHAR <= "00000010";
 				FLIPPY_COLOR <= "1011"; -- Amarelo
 				FLIPPY_STATE <= x"02"; -- Ir para próximo estado (delay)
 				
@@ -202,42 +141,41 @@ END PROCESS;
 -------------------------------------------------
 -- MAP
 -------------------------------------------------
---PROCESS (clk, reset)
---
---BEGIN 
+PROCESS (clk, reset)
+
+BEGIN 
 --		
---	IF RESET = '1' THEN
---		MAP_AUX <= x"00"; -- Resetar posição de desenho
---		MAP_STATE <= x"00"; -- Resetar estado
---		DELAY2 <= x"00000000"; -- Resetar delay
+IF RESET = '1' THEN
+		-- Resetar variáveis de cenário
+		MAP_AUX <= x"00"; -- Resetar posição de desenho
+		MAP_STATE <= x"00"; -- Resetar estado
+		DELAY2 <= x"00000000"; -- Resetar delay
+		MAP_SPEED <= x"00"; -- Resetar velocidade
+		
+	ELSIF (clk'event) and (clk = '1') THEN
+
+		CASE MAP_STATE IS
+			
+			WHEN x"00" => -- Estado de movimentação
+				
+				MAP_AUX <= MAP_AUX + MAP_SPEED; -- Mover cenário para esquerda	
+				-- Checar por colisões
+				MAP_STATE <= x"01"; -- Ir para próximo estado (delay)
+
+			WHEN x"01" => -- Delay
+			 	-- Mexer com esses valores
+				IF DELAY2 >= x"00000FFF" THEN
+					DELAY2 <= x"00000000";
+					MAP_STATE <= x"00";
+				ELSE
+					DELAY2 <= DELAY2 + x"01";
+				END IF;
+				
+			WHEN OTHERS =>
+		END CASE;
 --
---	ELSIF (clk'event) and (clk = '1') THEN
---
---		CASE MAP_STATE IS
---			
---			WHEN x"00" => -- Estado de movimentação
---				
---				MAP_AUX <= MAP_AUX + MAP_SPEED; -- Mover cenário para esquerda	
---
---				-- Checar por colisões
---
---				MAP_STATE <= x"01"; -- Ir para próximo estado (delay)
---
---			WHEN x"01" => -- Delay
---			 	-- Mexer com esses valores
---				IF DELAY2 >= x"00000FFF" THEN
---					DELAY2 <= x"00000000";
---					MAP_STATE <= x"00";
---				ELSE
---					DELAY2 <= DELAY2 + x"01";
---				END IF;
---				
---			WHEN OTHERS =>
---		END CASE;
---
---	END IF;
---
---END PROCESS;
+	END IF;
+END PROCESS;
 -------------------------------------------------
 -- VIDEO LOOP
 -------------------------------------------------
@@ -249,16 +187,22 @@ BEGIN
 		VIDEOE <= x"00";
 		videoflag <= '0';
 		FLIPPY_POSA <= x"0000";
-	
+		
 	ELSIF (clkvideo'event) and (clkvideo = '1') THEN
-		CASE VIDEOE IS			
-
+		CASE VIDEOE IS
+		
+			-------------------------------------------------
+			-- Desenhar Flippy
+			-------------------------------------------------
+		
 			-- Apagar Flippy
 			WHEN x"00" =>
 			
 				if(FLIPPY_POSA = FLIPPY_POS) then -- Apenas apagar quando muda de posição
+					--videoflag <= '0';
 					VIDEOE <= x"00";
 				else
+				
 				-- Apagar
 				vga_char(15 downto 12) <= "0000";
 				vga_char(11 downto 8) <= "0000";
@@ -267,6 +211,7 @@ BEGIN
 				vga_pos(15 downto 0) <= FLIPPY_POSA;
 				videoflag <= '1';
 				VIDEOE <= x"01";
+				
 				end if;
 
 			-- Intermediário Apagar->Desenhar
@@ -276,19 +221,42 @@ BEGIN
 		
 			-- Desenhar Flippy
 			WHEN x"02" =>
+				
+				--if (FLIPPY_POSA = FLIPPY_POS) then
+				--	VIDEOE <= x"02";
+				--else
+							
+		
 				vga_char(15 downto 12) <= "0000";
 				vga_char(11 downto 8) <= FLIPPY_COLOR;
 				vga_char(7 downto 0) <= FLIPPY_CHAR;
 				
 				vga_pos(15 downto 0) <= FLIPPY_POS;
-				FLIPPY_POSA <= FLIPPY_POS;
+				FLIPPY_POSA <= FLIPPY_POS; -- Atualizar posição
+				
 				videoflag <= '1';
 				VIDEOE <= x"03";
-			
+				
+				
+				-- end if;
+				
 			-- Intermediário Desenhar->Apagar
 			WHEN x"03" =>
 				videoflag <= '0';
 				VIDEOE <= x"00";
+				
+			-------------------------------------------------
+			-- Desenhar Cenário
+			-------------------------------------------------
+			
+			-- Apagar Cenário
+			
+			-- Intermediário Apagar->Desenhar
+			
+			-- Desenhar Cenário
+			
+			-- Intermediário Desenhar->Apagar
+			
 			
 			WHEN OTHERS =>
 				videoflag <= '0';
