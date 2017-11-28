@@ -30,7 +30,7 @@ for line in image:
 
 # declare vectors
 for line in lines:
-	print("map_line%d: std_logic_vector(%d downto 0);" % (line, len(lines[line])))
+	print("SIGNAL map_line%d: std_logic_vector(%d downto 0);" % (line, len(lines[line])))
 
 # fill vectors
 for line in lines:
