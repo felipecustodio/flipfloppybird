@@ -37,6 +37,7 @@ for line in lines:
 		memory[index] = int(bit)
 		index += 1
 
+print("CONTENT BEGIN")
 flag = False
 current = []
 for index in memory:
@@ -46,9 +47,9 @@ for index in memory:
 		if (memory[index] == 1):
 			flag = True
 			if (len(current) > 1):
-				print("[%d..%d] : 0" % (current[0], current[len(current)-1]))
+				print("    [%d..%d] : 0" % (current[0], current[len(current)-1]))
 			else:
-				print("%d : 0" % (current[0]))
+				print("    %d : 0" % (current[0]))
 			current.clear()
 			current.append(index)
 	if (flag):
@@ -58,8 +59,9 @@ for index in memory:
 		if (memory[index] == 0):
 			flag = False
 			if (len(current) > 1):
-				print("[%d..%d] : 1" % (current[0], current[len(current)-1]))
+				print("    [%d..%d] : 1" % (current[0], current[len(current)-1]))
 			else:
-				print("%d : 1" % (current[0]))
+				print("    %d : 1" % (current[0]))
 			current.clear()
 			current.append(index)
+print("END;")
