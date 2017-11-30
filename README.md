@@ -8,7 +8,7 @@ VHDL [Flappy Bird]() implementation for SSC-108 - Digital Systems @ University o
 
 
 <p align="center">
-  <img src="http://i.perezhilton.com/wp-content/uploads/2014/02/flappybirdsgif.gif"/>
+  <img src="https://i.imgur.com/bz0u6xd.png"/>
 </p>
 
 *Developed using:*
