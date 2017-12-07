@@ -230,26 +230,52 @@ IF RESET = '1' THEN
 
 	ELSIF (clk'event) and (clk = '1') THEN
 
-		CASE MAP_STATE IS
+		CASE CANO1_STATE IS
 
-			WHEN x"00" => -- Estado de movimentação
-
-				MAP_AUX <= MAP_AUX + MAP_SPEED; -- Mover cenário para esquerda
-				-- Checar por colisões
-				MAP_STATE <= x"01"; -- Ir para próximo estado (delay)
-
-			WHEN x"01" => -- Delay
-			 	-- Mexer com esses valores
-				IF DELAY2 >= x"00000FFF" THEN
-					DELAY2 <= x"00000000";
-					MAP_STATE <= x"00";
-				ELSE
-					DELAY2 <= DELAY2 + x"01";
+			WHEN x"00" => -- ESTADO DE MOVIMENTACAO
+				-- INDO PARA ESQUERDA
+				IF (FLIPPY_POS < 1159) THEN   -- não está na ultima linha
+					--FLIPPY_POS <= FLIPPY_POS + x"28";  -- CAI 40
+					--FLIPPY_STATE <= x"02";
 				END IF;
+
+				--ENCOSTOU NA PRIMEIRA COLUNA
+				IF (FLIPPY_POS > 1119) THEN
+					--FLIPPY_FLAG <= x"01"; -- Morreu
+					--FLIPPY_STATE <= x"03"; -- Ir para Game Over
+				END IF;
+
+				-- BOTAO DE RESTAR
+				CASE key IS
+					-- Resetar jogo
+					WHEN x"0D" => -- ENTER = RESET
+						CANO1_COLOR <= "1111"; -- Branco
+						CANO1_CHAR <= "00000001";
+						CANO1_POS <= x"0261";
+						DELAY_CANO1 <= x"00000000";
+						CANO1_STATE <= x"00";
+						CANO1_FLAG <= x"00"; -- PARA SABER QUANDO ACABAR O JOGO 0: VIVO / 1: MORTO
+						CANO1_STATE <= x"02";
+					WHEN OTHERS =>
+				END CASE;
+
+			WHEN x"02" => -- Delay
+				-- Delay máximo, voltar à ação
+				IF DELAY_CANO1 >=  x"00000EFF" THEN
+					DELAY_CANO1 <= x"00000000";
+					CANO1_STATE <= x"00";
+				ELSE
+				-- Aumentar delay
+					DELAY_CANO1 <= DELAY_CANO1 + x"01";
+				END IF;
+
+			WHEN x"03" => -- Estado Game Over
+				CANO1_CHAR <= "00000010";
+				CANO1_COLOR <= "1011"; -- Amarelo
+				CANO1_STATE <= x"02"; -- Ir para próximo estado (delay)
 
 			WHEN OTHERS =>
 		END CASE;
---
 	END IF;
 END PROCESS;
 
@@ -371,9 +397,9 @@ BEGIN
 			-- APAGAR CANO 1
 			WHEN x"06" =>
 
-				--if(FLIPPY_POSA = FLIPPY_POS) then -- Apenas apagar quando muda de posição
+				if(CANO1_POSA = CANO1_POS) then -- Apenas apagar quando muda de posição
 				--	VIDEOE <= x"00";
-				--else
+				else
 
 				-- Apagar
 				vga_char(15 downto 12) <= "0000";
@@ -381,11 +407,11 @@ BEGIN
 				vga_char(7 downto 0) <= "00000000"; -- Primeiro char - quadrado
 
 				--APAGANDO A POSICAO ANTERIOR DO CANO 1
-				vga_pos(15 downto 0) <= FLIPPY_POSA;
+				vga_pos(15 downto 0) <= CANO1_POSA;
 				videoflag <= '1';
-				VIDEOE <= x"01";
+				VIDEOE <= x"07";
 
-				--end if;
+				end if;
 
 			-- Intermediário APAGAR CANO1 -> DESENHAR CANO 1
 			WHEN x"07" =>
@@ -397,22 +423,19 @@ BEGIN
 
 				-- AJUSTAR VARIAVEIS PARA CANO 1
 				vga_char(15 downto 12) <= "0000";
-				vga_char(11 downto 8) <= FLIPPY_COLOR;
-				vga_char(7 downto 0) <= FLIPPY_CHAR;
+				vga_char(11 downto 8) <= CANO1_COLOR;
+				vga_char(7 downto 0) <= CANO1_CHAR;
 
-				vga_pos(15 downto 0) <= FLIPPY_POS;
-				FLIPPY_POSA <= FLIPPY_POS; -- Atualizar posição
+				vga_pos(15 downto 0) <= CANO1_POS;
+				CANO1_POSA <= CANO1_POS; -- Atualizar posição
 
 				videoflag <= '1';
-				VIDEOE <= x"00";
+				VIDEOE <= x"05";
 
-				-- Intermediário CANO 1 -> APAGAR FLIPPY
+				-- Intermediário DESENHAR CANO 1 -> APAGAR FLIPPY
 				WHEN x"05" =>
 					videoflag <= '0';
 					VIDEOE <= x"00"; -- VOLTANDO PARA O AAGAR FLIPPY
-
-
-
 
 			-------------------------------------------------
 			-- Desenhar Cenário
