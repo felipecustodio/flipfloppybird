@@ -234,8 +234,8 @@ IF RESET = '1' THEN
 
 			WHEN x"00" => -- ESTADO DE MOVIMENTACAO
 				-- INDO PARA ESQUERDA
-				IF (FLIPPY_POS < 1159) THEN   -- não está na ultima linha
-					--FLIPPY_POS <= FLIPPY_POS + x"28";  -- CAI 40
+				IF (CANO1_POS < 1159) THEN   -- não está na ultima linha
+					CANO1_POS <= FLIPPY_POS + x"28";  -- CAI 40
 					--FLIPPY_STATE <= x"02";
 				END IF;
 
@@ -291,6 +291,7 @@ BEGIN
 		VIDEOE <= x"00";
 		videoflag <= '0';
 		FLIPPY_POSA <= x"0000";
+		CANO1_POSA <= x"0000";
 
 		-- INICIALIZAR TEXTOS
 		GAME_OVER <= (OTHERS=>"00000000");
