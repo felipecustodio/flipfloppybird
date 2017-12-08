@@ -11,20 +11,34 @@ use  IEEE.STD_LOGIC_UNSIGNED.all;
 ENTITY notepad IS
 
 	PORT(
+		-- VGA
 		clkvideo, clk, reset  : IN	STD_LOGIC;
 		videoflag	: out std_LOGIC; -- ligar desenho
 		vga_pos		: out STD_LOGIC_VECTOR(15 downto 0); -- posição na tela
 		vga_char	: out STD_LOGIC_VECTOR(15 downto 0); -- charmap a ser desenhado
+		-- Keyboard
 		key			: IN 	STD_LOGIC_VECTOR(7 DOWNTO 0)	-- teclado
+		-- Memory Chips
+		-- Obstacles
+		-- map_in : IN STD_LOGIC; -- recebe conteúdo da memória
+		-- map_out : OUT STD_LOGIC_VECTOR(4 DOWNTO 0) -- enviar posição de memória a ser acessada
 		);
 
 END  notepad ;
+
+
+-- DICAS: ALFABETO COMECA NO 66 --(A)
+
+
 
 ARCHITECTURE a OF notepad IS
 
 	-------------------------------------------------
 	-- Sinal de vídeo - escrever na tela
 	SIGNAL VIDEOE      : STD_LOGIC_VECTOR(7 DOWNTO 0);
+	-- VECTOR PARA DESENHAR AN TELA
+	TYPE vector IS ARRAY(0 to 255) of STD_LOGIC_VECTOR(7 DOWNTO 0);
+
 	-------------------------------------------------
 
 	-------------------------------------------------
@@ -54,7 +68,14 @@ ARCHITECTURE a OF notepad IS
 
 	-- Delay
 	SIGNAL DELAY2 : STD_LOGIC_VECTOR(31 DOWNTO 0);
-
+	
+	-- Game Over
+	SIGNAL GAME_OVER : vector;	
+	
+	--DESENHAR ARRAY
+	SIGNAL INDEX  	 : integer;
+	SIGNAL POSITION   : STD_LOGIC_VECTOR(15 DOWNTO 0);
+	
 	-------------------------------------------------       
 
 
@@ -188,6 +209,22 @@ BEGIN
 		videoflag <= '0';
 		FLIPPY_POSA <= x"0000";
 		
+		-- INICIALIZAR TEXTOS
+		GAME_OVER <= (OTHERS=>"00000000");
+		GAME_OVER(0) <= "01000111"; -- G
+		GAME_OVER(1) <= "01000001"; -- A
+		GAME_OVER(2) <= "01001101"; -- M
+		GAME_OVER(3) <= "01000101"; -- E
+		GAME_OVER(5) <= "01001111"; -- O
+		GAME_OVER(6) <= "01010110"; -- V
+		GAME_OVER(7) <= "01000101"; -- E
+		GAME_OVER(8) <= "01010010"; -- R
+		
+		--SETAR INDEX E POS INICIAL
+		INDEX <= 0;
+		-- POSITION <= x"0205";
+		POSITION <= x"00B9";
+		
 	ELSIF (clkvideo'event) and (clkvideo = '1') THEN
 		CASE VIDEOE IS
 		
@@ -199,14 +236,13 @@ BEGIN
 			WHEN x"00" =>
 			
 				if(FLIPPY_POSA = FLIPPY_POS) then -- Apenas apagar quando muda de posição
-					--videoflag <= '0';
 					VIDEOE <= x"00";
 				else
 				
 				-- Apagar
 				vga_char(15 downto 12) <= "0000";
-				vga_char(11 downto 8) <= "0000";
-				vga_char(7 downto 0) <= "00000000";
+				vga_char(11 downto 8) <= "1110"; -- Pintar de azul (fundo)
+				vga_char(7 downto 0) <= "00000000"; -- Primeiro char - quadrado
 				
 				vga_pos(15 downto 0) <= FLIPPY_POSA;
 				videoflag <= '1';
@@ -221,12 +257,7 @@ BEGIN
 		
 			-- Desenhar Flippy
 			WHEN x"02" =>
-				
-				--if (FLIPPY_POSA = FLIPPY_POS) then
-				--	VIDEOE <= x"02";
-				--else
 							
-		
 				vga_char(15 downto 12) <= "0000";
 				vga_char(11 downto 8) <= FLIPPY_COLOR;
 				vga_char(7 downto 0) <= FLIPPY_CHAR;
@@ -234,17 +265,51 @@ BEGIN
 				vga_pos(15 downto 0) <= FLIPPY_POS;
 				FLIPPY_POSA <= FLIPPY_POS; -- Atualizar posição
 				
-				videoflag <= '1';
+				videoflag <= '1';			
 				VIDEOE <= x"03";
-				
-				
-				-- end if;
-				
-			-- Intermediário Desenhar->Apagar
+
+			-- Intermediário Desenhar->pALAVRA
 			WHEN x"03" =>
 				videoflag <= '0';
-				VIDEOE <= x"00";
+				-- SE GAME OVER, DESENHAR TEXTO NA TELA
+--				IF (FLIPPY_FLAG = x"00") THEN
+				VIDEOE <= x"04";
+--				END IF;
+--				VIDEOE <= x"00";
+			
+			-------------------------------------------------
+			-- Desenhar Textos
+			-------------------------------------------------
+		
+		
+			WHEN x"04" => -- Desenha FLIPPY
 				
+				vga_char(15 downto 12) <= "0000";
+				vga_char(11 downto 8) <= "1001";
+				vga_char(7 downto 0) <= GAME_OVER(INDEX);	
+				vga_pos(15 downto 0)	<= POSITION;
+				
+				videoflag <= '1';
+				
+				VIDEOE <= x"05";
+			
+		
+			-- Intermediário PALAVRA->Apagar
+			WHEN x"05" =>
+				videoflag <= '0';
+				
+							
+				IF(POSITION > x"0302") THEN
+					POSITION <= x"0294";
+					INDEX <= 0;
+				ELSE
+					POSITION <= POSITION + x"01";
+					INDEX <= INDEX + 1;
+					VIDEOE <= x"04";
+				END IF;
+				
+				VIDEOE <= x"00";
+		
 			-------------------------------------------------
 			-- Desenhar Cenário
 			-------------------------------------------------
