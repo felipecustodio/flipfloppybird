@@ -6,6 +6,6 @@ cols = 0
 for i in range(0,screen):
 	print("%d " % (i), end='')
 	cols += 1
-	if (cols >= 41):
+	if (cols > 39):
 		print('')
 		cols = 0
