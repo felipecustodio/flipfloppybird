@@ -22,11 +22,17 @@ i = 0
 for line in image:
 	lines[i] = []
 	for bit in line:
-		if (bit == 0):
-			lines[i].append(1)
-		if (bit == 255):
-			lines[i].append(0)
+
+		if (bit == 139.83):
+			lines[i].append("yellow")
+		if (bit == 255.0):
+			lines[i].append("white")
+		if (bit == 174.73199):
+			lines[i].append("blue")
+
 	i += 1
+
+print(lines)
 
 # find bit value for each memory address
 memory = {}

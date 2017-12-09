@@ -34,13 +34,19 @@ END  notepad ;
 ARCHITECTURE a OF notepad IS
 
 	-------------------------------------------------
+	-- VÍDEO
+	-------------------------------------------------
+	-------------------------------------------------
 	-- Sinal de vídeo - escrever na tela
 	SIGNAL VIDEOE      : STD_LOGIC_VECTOR(7 DOWNTO 0);
 	-- VECTOR PARA DESENHAR AN TELA
 	TYPE vector IS ARRAY(0 to 255) of STD_LOGIC_VECTOR(7 DOWNTO 0);
-
+	TYPE vector_pos IS ARRAY(0 to 255) of STD_LOGIC_VECTOR(15 DOWNTO 0);
 	-------------------------------------------------
 
+	-------------------------------------------------
+	-- FLIPPY
+	-------------------------------------------------
 	-------------------------------------------------
 	-- Flippy
 	SIGNAL FLIPPY_POS   : STD_LOGIC_VECTOR(15 DOWNTO 0);
@@ -54,9 +60,15 @@ ARCHITECTURE a OF notepad IS
 	-- Delay do Flippy
 	SIGNAL DELAY1      : STD_LOGIC_VECTOR(31 DOWNTO 0);
 
+	-------------------------------------------------
+	-- CENÁRIO / CANOS
+	-------------------------------------------------
 	---------------------------------------------------
-	-- CANO1
-	SIGNAL CANO1_POS   : STD_LOGIC_VECTOR(15 DOWNTO 0);
+	SIGNAL VECTOR_CANO : vector_pos;
+	SIGNAL INDEX_CANO1  	 : integer;
+	SIGNAL POSITION_CANO1   : STD_LOGIC_VECTOR(15 DOWNTO 0);
+
+	SIGNAL CANO1_POS  : STD_LOGIC_VECTOR(15 DOWNTO 0);
 	SIGNAL CANO1_POSA  : STD_LOGIC_VECTOR(15 DOWNTO 0);
 	SIGNAL CANO1_CHAR  : STD_LOGIC_VECTOR(7 DOWNTO 0);
 	SIGNAL CANO1_COLOR : STD_LOGIC_VECTOR(3 DOWNTO 0);
@@ -68,20 +80,8 @@ ARCHITECTURE a OF notepad IS
 	SIGNAL DELAY_CANO1      : STD_LOGIC_VECTOR(31 DOWNTO 0);
 
 	-------------------------------------------------
-	-- Cenário
-
-	-- Posição atual de onde começa o desenho
-	SIGNAL MAP_AUX : STD_LOGIC_VECTOR(7 DOWNTO 0);
-
-	-- Velocidade de movimento do mapa
-	SIGNAL MAP_SPEED : STD_LOGIC_VECTOR(7 DOWNTO 0);
-
-	-- Estado
-	SIGNAL MAP_STATE : STD_LOGIC_VECTOR(7 DOWNTO 0);
-
-	-- Delay
-	SIGNAL DELAY2 : STD_LOGIC_VECTOR(31 DOWNTO 0);
-
+	-- TEXTOS
+	-------------------------------------------------
 	-- Game Over
 	SIGNAL GAME_OVER : vector;
 
@@ -173,47 +173,6 @@ PROCESS (clk, reset)
 END PROCESS;
 
 -------------------------------------------------
--- MAP
--------------------------------------------------
-PROCESS (clk, reset)
-
-BEGIN
---
-IF RESET = '1' THEN
-		-- Resetar variáveis de cenário
-		MAP_AUX <= x"00"; -- Resetar posição de desenho
-		MAP_STATE <= x"00"; -- Resetar estado
-		DELAY2 <= x"00000000"; -- Resetar delay
-		MAP_SPEED <= x"00"; -- Resetar velocidade
-
-	ELSIF (clk'event) and (clk = '1') THEN
-
-		CASE MAP_STATE IS
-
-			WHEN x"00" => -- Estado de movimentação
-
-				MAP_AUX <= MAP_AUX + MAP_SPEED; -- Mover cenário para esquerda
-				-- Checar por colisões
-				MAP_STATE <= x"01"; -- Ir para próximo estado (delay)
-
-			WHEN x"01" => -- Delay
-			 	-- Mexer com esses valores
-				IF DELAY2 >= x"00000FFF" THEN
-					DELAY2 <= x"00000000";
-					MAP_STATE <= x"00";
-				ELSE
-					DELAY2 <= DELAY2 + x"01";
-				END IF;
-
-			WHEN OTHERS =>
-		END CASE;
---
-	END IF;
-END PROCESS;
-
-
-
--------------------------------------------------
 -- CANO 1 (EM CIMA/EM BAIXO)
 -------------------------------------------------
 PROCESS (clk, reset)
@@ -221,12 +180,12 @@ PROCESS (clk, reset)
 BEGIN
 --
 IF RESET = '1' THEN
-	CANO1_CHAR <= "00000001";
-	CANO1_COLOR <= "1111"; -- Branco
-	CANO1_POS <= x"0261";
+	CANO1_CHAR <= "00000000"; -- Bloco Sólido
+	CANO1_COLOR <= "1010"; -- Verde
+	CANO1_POS <= x"0028"; -- Canto superior direito
 	DELAY_CANO1 <= x"00000000";
 	CANO1_STATE <= x"00";
-	CANO1_FLAG <= x"00"; -- 0: VIVO / 1: MORTO
+	CANO1_FLAG <= x"00"; -- 0: ANDANDO / 1: PARADO
 
 	ELSIF (clk'event) and (clk = '1') THEN
 
@@ -234,24 +193,21 @@ IF RESET = '1' THEN
 
 			WHEN x"00" => -- ESTADO DE MOVIMENTACAO
 				-- INDO PARA ESQUERDA
-				IF (CANO1_POS < 1159) THEN   -- não está na ultima linha
-					CANO1_POS <= FLIPPY_POS + x"28";  -- CAI 40
-					--FLIPPY_STATE <= x"02";
+				IF (CANO1_POS > x"0002") THEN   -- não está na parede da esquerda
+					CANO1_POS <= CANO1_POS - x"01";  -- Anda para a esquerda
+					CANO1_STATE <= x"02";
+				ELSE
+					CANO1_POS <= x"0028";
+					CANO1_STATE <= x"02";
 				END IF;
 
-				--ENCOSTOU NA PRIMEIRA COLUNA
-				IF (FLIPPY_POS > 1119) THEN
-					--FLIPPY_FLAG <= x"01"; -- Morreu
-					--FLIPPY_STATE <= x"03"; -- Ir para Game Over
-				END IF;
-
-				-- BOTAO DE RESTAR
+				-- BOTAO DE RESETAR
 				CASE key IS
 					-- Resetar jogo
 					WHEN x"0D" => -- ENTER = RESET
 						CANO1_COLOR <= "1111"; -- Branco
-						CANO1_CHAR <= "00000001";
-						CANO1_POS <= x"0261";
+						CANO1_CHAR <= "00000000";
+						CANO1_POS <= x"0028";
 						DELAY_CANO1 <= x"00000000";
 						CANO1_STATE <= x"00";
 						CANO1_FLAG <= x"00"; -- PARA SABER QUANDO ACABAR O JOGO 0: VIVO / 1: MORTO
@@ -261,7 +217,7 @@ IF RESET = '1' THEN
 
 			WHEN x"02" => -- Delay
 				-- Delay máximo, voltar à ação
-				IF DELAY_CANO1 >=  x"00000EFF" THEN
+				IF DELAY_CANO1 >=  x"00000FFF" THEN
 					DELAY_CANO1 <= x"00000000";
 					CANO1_STATE <= x"00";
 				ELSE
@@ -269,16 +225,10 @@ IF RESET = '1' THEN
 					DELAY_CANO1 <= DELAY_CANO1 + x"01";
 				END IF;
 
-			WHEN x"03" => -- Estado Game Over
-				CANO1_CHAR <= "00000010";
-				CANO1_COLOR <= "1011"; -- Amarelo
-				CANO1_STATE <= x"02"; -- Ir para próximo estado (delay)
-
 			WHEN OTHERS =>
 		END CASE;
 	END IF;
 END PROCESS;
-
 
 -------------------------------------------------
 -- VIDEO LOOP
@@ -306,8 +256,8 @@ BEGIN
 
 		--SETAR INDEX E POS INICIAL
 		INDEX <= 0;
-		-- POSITION <= x"0205";
-		POSITION <= x"00B9";
+		POSITION <= x"01A9";
+		-- POSITION <= x"00B9";
 
 	ELSIF (clkvideo'event) and (clkvideo = '1') THEN
 		CASE VIDEOE IS
@@ -320,7 +270,11 @@ BEGIN
 			WHEN x"00" =>
 
 				if(FLIPPY_POSA = FLIPPY_POS) then -- Apenas apagar quando muda de posição
-					VIDEOE <= x"00";
+					IF (FLIPPY_FLAG = x"01") THEN -- Se estiver morto, ir p/ desenhar Game Over
+						VIDEOE <= x"04";
+					ELSE
+						VIDEOE <= x"00";
+					END IF;
 				else
 
 				-- Apagar
@@ -352,19 +306,16 @@ BEGIN
 				videoflag <= '1';
 				VIDEOE <= x"03";
 
-			-- Intermediário Desenhar->pALAVRA
+			-- Intermediário Desenhar->Textos
 			WHEN x"03" =>
 				videoflag <= '0';
 				-- SE GAME OVER, DESENHAR TEXTO NA TELA
---				IF (FLIPPY_FLAG = x"00") THEN
-				VIDEOE <= x"04";
---				END IF;
---				VIDEOE <= x"00";
+
+				VIDEOE <= x"06";
 
 			-------------------------------------------------
 			-- Desenhar Textos
 			-------------------------------------------------
-
 
 			WHEN x"04" => -- Desenha GAME OVER NA TELA
 
@@ -383,8 +334,8 @@ BEGIN
 				videoflag <= '0';
 
 
-				IF(POSITION > x"0302") THEN
-					POSITION <= x"0294";
+				IF(POSITION > x"01B2") THEN
+					POSITION <= x"01A9";
 					INDEX <= 0;
 				ELSE
 					POSITION <= POSITION + x"01";
@@ -394,7 +345,10 @@ BEGIN
 
 				VIDEOE <= x"06";
 
-			--ESTADOS PARA CANOS
+			-------------------------------------------------
+			-- Desenhar Canos
+			-------------------------------------------------
+
 			-- APAGAR CANO 1
 			WHEN x"06" =>
 
@@ -431,25 +385,17 @@ BEGIN
 				CANO1_POSA <= CANO1_POS; -- Atualizar posição
 
 				videoflag <= '1';
-				VIDEOE <= x"05";
+				VIDEOE <= x"09";
+
 
 				-- Intermediário DESENHAR CANO 1 -> APAGAR FLIPPY
-				WHEN x"05" =>
-					videoflag <= '0';
-					VIDEOE <= x"00"; -- VOLTANDO PARA O AAGAR FLIPPY
+			WHEN x"09" =>
+				videoflag <= '0';
+				VIDEOE <= x"00"; -- VOLTANDO PARA O APAGAR FLIPPY
 
 			-------------------------------------------------
 			-- Desenhar Cenário
 			-------------------------------------------------
-
-			-- Apagar Cenário
-
-			-- Intermediário Apagar->Desenhar
-
-			-- Desenhar Cenário
-
-			-- Intermediário Desenhar->Apagar
-
 
 			WHEN OTHERS =>
 				videoflag <= '0';
