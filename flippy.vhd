@@ -97,7 +97,7 @@ PROCESS (clk, reset)
 
 	IF RESET = '1' THEN
 		FLIPPY_CHAR <= "00000001";
-		FLIPPY_COLOR <= "1111"; -- Branco
+		FLIPPY_COLOR <= "1110"; -- Cor do Fundo / Passarinho preto
 		FLIPPY_POS <= x"0261";
 		DELAY1 <= x"00000000";
 		FLIPPY_STATE <= x"00";
@@ -134,7 +134,6 @@ PROCESS (clk, reset)
 
 					-- Resetar jogo
 					WHEN x"0D" => -- ENTER = RESET
-						FLIPPY_COLOR <= "1111"; -- Branco
 						FLIPPY_CHAR <= "00000001";
 						FLIPPY_POS <= x"0261";
 						DELAY1 <= x"00000000";
@@ -165,7 +164,6 @@ PROCESS (clk, reset)
 
 			WHEN x"03" => -- Estado Game Over
 				FLIPPY_CHAR <= "00000010";
-				FLIPPY_COLOR <= "1011"; -- Amarelo
 				FLIPPY_STATE <= x"02"; -- Ir para próximo estado (delay)
 
 			WHEN OTHERS =>
