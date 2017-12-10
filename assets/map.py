@@ -1,10 +1,3 @@
-# '''
-# Convert bitmap image into video memory mif file
-
-# Copying to clipboard:
-# python bmp2vhdlvector.py image | xclip -selection c  
-# '''
-
 import os
 import sys
 import math
