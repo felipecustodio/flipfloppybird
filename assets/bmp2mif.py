@@ -1,12 +1,13 @@
-'''
-Convert bitmap image into video memory mif file
+# '''
+# Convert bitmap image into video memory mif file
 
-Copying to clipboard:
-python bmp2vhdlvector.py image | xclip -selection c  
-'''
+# Copying to clipboard:
+# python bmp2vhdlvector.py image | xclip -selection c  
+# '''
 
 import os
 import sys
+import math
 from scipy import misc
 
 if (len(sys.argv) < 2):
@@ -22,17 +23,15 @@ i = 0
 for line in image:
 	lines[i] = []
 	for bit in line:
+		bit = math.floor(bit[0])
 
-		if (bit == 139.83):
-			lines[i].append("yellow")
-		if (bit == 255.0):
-			lines[i].append("white")
-		if (bit == 174.73199):
-			lines[i].append("blue")
-
+		if (bit == 139):
+			lines[i].append(3)
+		if (bit == 255):
+			lines[i].append(15)
+		if (bit == 174):
+			lines[i].append(14)
 	i += 1
-
-print(lines)
 
 # find bit value for each memory address
 memory = {}
@@ -53,9 +52,9 @@ for index in memory:
 		if (memory[index] == 1):
 			flag = True
 			if (len(current) > 1):
-				print("    [%d..%d] : 0" % (current[0], current[len(current)-1]))
+				print("[%d..%d] : 0" % (current[0], current[len(current)-1]))
 			else:
-				print("    %d : 0" % (current[0]))
+				print("%d : 0" % (current[0]))
 			current.clear()
 			current.append(index)
 	if (flag):
@@ -65,9 +64,9 @@ for index in memory:
 		if (memory[index] == 0):
 			flag = False
 			if (len(current) > 1):
-				print("    [%d..%d] : 1" % (current[0], current[len(current)-1]))
+				print("[%d..%d] : 1" % (current[0], current[len(current)-1]))
 			else:
-				print("    %d : 1" % (current[0]))
+				print("%d : 1" % (current[0]))
 			current.clear()
 			current.append(index)
 print("END;")

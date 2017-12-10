@@ -21,9 +21,9 @@ for line in image:
 	print("%d  :   " % (start_index), end='')
 	for bit in line:
 		if (bit == 0):
-			print(1, end='')
-		if (bit == 255):
 			print(0, end='')
+		if (bit == 255):
+			print(1, end='')
 	print(';')
 	start_index += 1
 
