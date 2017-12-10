@@ -15,58 +15,27 @@ if (len(sys.argv) < 2):
 	exit()
 
 path = sys.argv[1]
-image = misc.imread(path, flatten = 1)
+image = misc.imread(path, flatten = 0)
 
-# get bits
-lines = {}
-i = 0
+# color positions
+yellow = []
+white = []
+
+position = 0
 for line in image:
-	lines[i] = []
-	for bit in line:
-		bit = math.floor(bit[0])
+	for col in line:
+		if col[0] == 143:
+			yellow.append(hex(position))
+		if col[0] == 255:
+			white.append(hex(position))						
+		position += 1
 
-		if (bit == 139):
-			lines[i].append(3)
-		if (bit == 255):
-			lines[i].append(15)
-		if (bit == 174):
-			lines[i].append(14)
-	i += 1
-
-# find bit value for each memory address
-memory = {}
 index = 0
-for line in lines:
-	value = str(''.join(map(str,lines[line])))
-	for bit in value:
-		memory[index] = int(bit)
-		index += 1
+for value in yellow:
+	print("MOUNTAIN_VECTOR(%d) <= x\"%s\";" % (index,value[2:]))
+	index += 1
 
-print("CONTENT BEGIN")
-flag = False
-current = []
-for index in memory:
-	if (not flag):
-		if (memory[index] == 0):
-			current.append(index)
-		if (memory[index] == 1):
-			flag = True
-			if (len(current) > 1):
-				print("[%d..%d] : 0" % (current[0], current[len(current)-1]))
-			else:
-				print("%d : 0" % (current[0]))
-			current.clear()
-			current.append(index)
-	if (flag):
-		if (memory[index] == 1):
-			if (index != current[0]):
-				current.append(index)
-		if (memory[index] == 0):
-			flag = False
-			if (len(current) > 1):
-				print("[%d..%d] : 1" % (current[0], current[len(current)-1]))
-			else:
-				print("%d : 1" % (current[0]))
-			current.clear()
-			current.append(index)
-print("END;")
+index = 0
+for value in white:
+	print("CLOUD_VECTOR(%d) <= x\"%s\";" % (index,value[2:]))
+	index += 1
