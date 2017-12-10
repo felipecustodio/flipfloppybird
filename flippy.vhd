@@ -18,18 +18,11 @@ ENTITY notepad IS
 		vga_char	: out STD_LOGIC_VECTOR(15 downto 0); -- charmap a ser desenhado
 		-- Keyboard
 		key			: IN 	STD_LOGIC_VECTOR(7 DOWNTO 0)	-- teclado
-		-- Memory Chips
-		-- Obstacles
-		-- map_in : IN STD_LOGIC; -- recebe conteúdo da memória
-		-- map_out : OUT STD_LOGIC_VECTOR(4 DOWNTO 0) -- enviar posição de memória a ser acessada
 		);
 
 END  notepad ;
 
-
 -- DICAS: ALFABETO COMECA NO 66 --(A)
-
-
 
 ARCHITECTURE a OF notepad IS
 
@@ -40,8 +33,8 @@ ARCHITECTURE a OF notepad IS
 	-- Sinal de vídeo - escrever na tela
 	SIGNAL VIDEOE      : STD_LOGIC_VECTOR(7 DOWNTO 0);
 	-- VECTOR PARA DESENHAR AN TELA
-	TYPE vector IS ARRAY(0 to 255) of STD_LOGIC_VECTOR(7 DOWNTO 0);
-	TYPE vector_pos IS ARRAY(0 to 255) of STD_LOGIC_VECTOR(15 DOWNTO 0);
+	TYPE vector IS ARRAY(0 to 255) of STD_LOGIC_VECTOR(7 DOWNTO 0); -- Vetor de char (charmap)
+	TYPE vector_pos IS ARRAY(0 to 255) of STD_LOGIC_VECTOR(15 DOWNTO 0); -- Vetor de posições
 	-------------------------------------------------
 
 	-------------------------------------------------
@@ -60,25 +53,25 @@ ARCHITECTURE a OF notepad IS
 	-- Delay do Flippy
 	SIGNAL DELAY1      : STD_LOGIC_VECTOR(31 DOWNTO 0);
 	
+	-- Variáveis para checar colisão
+	SIGNAL I : integer;
+	
 	-------------------------------------------------
 	-- CENÁRIO / CANOS
 	-------------------------------------------------
 	---------------------------------------------------
-	SIGNAL VECTOR_CANO : vector_pos;
-	SIGNAL INDEX_CANO1  	 : integer;
-	SIGNAL POSITION_CANO1   : STD_LOGIC_VECTOR(15 DOWNTO 0);
+	SIGNAL CANO_VECTOR : vector_pos;
+	SIGNAL INDEX_CANO  	 : integer;
+	SIGNAL POSITION_CANO   : STD_LOGIC_VECTOR(15 DOWNTO 0);
+	SIGNAL CANO_OFFSET   : STD_LOGIC_VECTOR(15 DOWNTO 0);
 
-	SIGNAL CANO1_POS  : STD_LOGIC_VECTOR(15 DOWNTO 0);
-	SIGNAL CANO1_POSA  : STD_LOGIC_VECTOR(15 DOWNTO 0);	
-	SIGNAL CANO1_CHAR  : STD_LOGIC_VECTOR(7 DOWNTO 0);
-	SIGNAL CANO1_COLOR : STD_LOGIC_VECTOR(3 DOWNTO 0);
-	SIGNAL CANO1_FLAG  : STD_LOGIC_VECTOR(7 DOWNTO 0);
+	-- Estado atual do CANO
+	SIGNAL CANO_STATE : STD_LOGIC_VECTOR(7 DOWNTO 0);
+	
+	-- Delay do CANO
+	SIGNAL DELAY_CANO : STD_LOGIC_VECTOR(31 DOWNTO 0);
 
-	-- Estado atual do CANO 1
-	SIGNAL CANO1_STATE : STD_LOGIC_VECTOR(7 DOWNTO 0);
-	-- Delay do CANO 1
-	SIGNAL DELAY_CANO1      : STD_LOGIC_VECTOR(31 DOWNTO 0);
-
+	
 	-------------------------------------------------
 	-- TEXTOS
 	-------------------------------------------------
@@ -88,9 +81,7 @@ ARCHITECTURE a OF notepad IS
 	--DESENHAR ARRAY
 	SIGNAL INDEX  	 : integer;
 	SIGNAL POSITION   : STD_LOGIC_VECTOR(15 DOWNTO 0);
-
 	-------------------------------------------------
-
 
 -------------------------------------------------
 -- GAME LOOP
@@ -140,6 +131,7 @@ PROCESS (clk, reset)
 							FLIPPY_FLAG <= x"01"; -- MORTO
 							FLIPPY_STATE <= x"03"; -- Ir para Game Over
 						END IF;
+
 					-- Resetar jogo
 					WHEN x"0D" => -- ENTER = RESET
 						FLIPPY_COLOR <= "1111"; -- Branco
@@ -151,6 +143,15 @@ PROCESS (clk, reset)
 						FLIPPY_STATE <= x"02";
 					WHEN OTHERS =>
 				END CASE;
+			
+			-- Checar colisão com posições do cano
+			for I in 0 to 8 loop
+				if (FLIPPY_POS = CANO_VECTOR(I) - CANO_OFFSET) then
+					-- COLIDIU!
+					FLIPPY_FLAG <= x"01"; -- MORTO
+					FLIPPY_STATE <= x"03";
+				end if;
+			end loop;
 
 			WHEN x"02" => -- Delay
 				-- Delay máximo, voltar à ação
@@ -173,56 +174,46 @@ PROCESS (clk, reset)
 END PROCESS;
 
 -------------------------------------------------
--- CANO 1 (EM CIMA/EM BAIXO)
+-- CANO
 -------------------------------------------------
 PROCESS (clk, reset)
 
-BEGIN
---
-IF RESET = '1' THEN
-	CANO1_CHAR <= "00000000"; -- Bloco Sólido
-	CANO1_COLOR <= "1010"; -- Verde
-	CANO1_POS <= x"0028"; -- Canto superior direito
-	DELAY_CANO1 <= x"00000000";
-	CANO1_STATE <= x"00";
-	CANO1_FLAG <= x"00"; -- 0: ANDANDO / 1: PARADO
+	BEGIN
 
+	IF RESET = '1' THEN
+		DELAY_CANO <= x"00000000";
+		CANO_STATE <= x"00";
+		CANO_OFFSET <= x"0000";
+		
 	ELSIF (clk'event) and (clk = '1') THEN
 
-		CASE CANO1_STATE IS
+		CASE CANO_STATE IS
 
-			WHEN x"00" => -- ESTADO DE MOVIMENTACAO
-				-- INDO PARA ESQUERDA
-				IF (CANO1_POS > x"0002") THEN   -- não está na parede da esquerda
-					CANO1_POS <= CANO1_POS - x"01";  -- Anda para a esquerda
-					CANO1_STATE <= x"02";
-				ELSE
-					CANO1_POS <= x"0028";
-					CANO1_STATE <= x"02";
-				END IF;
-
-				-- BOTAO DE RESETAR
+			WHEN x"00" => -- Estado de movimentação
+				-- Ir para esquerda
+				CANO_OFFSET <= CANO_OFFSET + x"01"; -- Movimentar offset para a esquerda
 				CASE key IS
-					-- Resetar jogo
 					WHEN x"0D" => -- ENTER = RESET
-						CANO1_COLOR <= "1111"; -- Branco
-						CANO1_CHAR <= "00000000";
-						CANO1_POS <= x"0028";
-						DELAY_CANO1 <= x"00000000";
-						CANO1_STATE <= x"00";
-						CANO1_FLAG <= x"00"; -- PARA SABER QUANDO ACABAR O JOGO 0: VIVO / 1: MORTO
-						CANO1_STATE <= x"02";
+						DELAY_CANO <= x"00000000";
+						CANO_STATE <= x"00";
+						CANO_OFFSET <= x"0000";
 					WHEN OTHERS =>
 				END CASE;
+				
+				IF (CANO_OFFSET > x"0027") THEN -- Limite esquerdo
+					CANO_OFFSET <= x"0000"; -- Resetar
+				END IF;
+				
+				CANO_STATE <= x"02";
 
 			WHEN x"02" => -- Delay
 				-- Delay máximo, voltar à ação
-				IF DELAY_CANO1 >=  x"00000FFF" THEN
-					DELAY_CANO1 <= x"00000000";
-					CANO1_STATE <= x"00";
+				IF DELAY_CANO >=  x"00000FFF" THEN
+					DELAY_CANO <= x"00000000";
+					CANO_STATE <= x"00";
 				ELSE
 				-- Aumentar delay
-					DELAY_CANO1 <= DELAY_CANO1 + x"01";
+					DELAY_CANO <= DELAY_CANO + x"01";
 				END IF;
 
 			WHEN OTHERS =>
@@ -241,7 +232,7 @@ BEGIN
 		VIDEOE <= x"00";
 		videoflag <= '0';
 		FLIPPY_POSA <= x"0000";
-		CANO1_POSA <= x"0000";
+		-- CANO1_POSA <= x"0000";
 
 		-- INICIALIZAR TEXTOS
 		GAME_OVER <= (OTHERS=>"00000000");
@@ -256,8 +247,21 @@ BEGIN
 
 		--SETAR INDEX E POS INICIAL
 		INDEX <= 0;
-		POSITION <= x"01A9";
-		-- POSITION <= x"00B9";
+		POSITION <= x"0032";
+		
+		-- INICIALIZAR CANO
+		CANO_VECTOR <= (OTHERS=>x"0027");
+		CANO_VECTOR(0) <= x"0027"; -- 39
+		CANO_VECTOR(1) <= x"004F"; -- 79
+		CANO_VECTOR(2) <= x"0077"; -- 119
+		CANO_VECTOR(3) <= x"009F"; -- 159
+		CANO_VECTOR(4) <= x"04AF"; -- 1199
+		CANO_VECTOR(5) <= x"0487"; -- 1159
+		CANO_VECTOR(6) <= x"045F"; -- 1119
+		CANO_VECTOR(7) <= x"0437"; -- 1079
+		
+		INDEX_CANO <= 0;
+		-- CANO_OFFSET <= x"0000";
 		
 	ELSIF (clkvideo'event) and (clkvideo = '1') THEN
 		CASE VIDEOE IS
@@ -328,14 +332,12 @@ BEGIN
 
 				VIDEOE <= x"05";
 
-
 			-- Intermediário PALAVRA->Apagar CANO1
 			WHEN x"05" =>
 				videoflag <= '0';
 
-
-				IF(POSITION > x"01B2") THEN
-					POSITION <= x"01A9";
+				IF(POSITION > x"003B") THEN
+					POSITION <= x"0032";
 					INDEX <= 0;
 				ELSE
 					POSITION <= POSITION + x"01";
@@ -349,54 +351,50 @@ BEGIN
 			-- Desenhar Canos
 			-------------------------------------------------
 			
-			-- APAGAR CANO 1
+			-- Desenhar na vertical
 			WHEN x"06" =>
-
-				if(CANO1_POSA = CANO1_POS) then -- Apenas apagar quando muda de posição
-				--	VIDEOE <= x"00";
-				else
-
-				-- Apagar
-				vga_char(15 downto 12) <= "0000";
-				vga_char(11 downto 8) <= "1110"; -- Pintar de azul (fundo)
-				vga_char(7 downto 0) <= "00000000"; -- Primeiro char - quadrado
-
-				--APAGANDO A POSICAO ANTERIOR DO CANO 1
-				vga_pos(15 downto 0) <= CANO1_POSA;
+				vga_char(15 downto 12) <= "0000";		
+				vga_char(11 downto 8) <= "0010";
+				vga_char(7 downto 0) <= "00000000"; -- Primeiro char - quadrado;				
+				vga_pos(15 downto 0)	<= CANO_VECTOR(INDEX_CANO) - CANO_OFFSET;
 				videoflag <= '1';
+
 				VIDEOE <= x"07";
-
-				end if;
-
-			-- Intermediário APAGAR CANO1 -> DESENHAR CANO 1
+			
+			-- Intermediário
 			WHEN x"07" =>
-				videoflag <= '0';
-				VIDEOE <= x"08";
+				IF(INDEX_CANO < 8) THEN
+					INDEX_CANO <= INDEX_CANO + 1;
+					VIDEOE <= x"06";
+				ELSE
+					INDEX_CANO <= 0;
+					VIDEOE <= x"08";
+				END IF;
 
-			-- DESENHANDO CANO1
+			-- Transição
 			WHEN x"08" =>
-
-				-- AJUSTAR VARIAVEIS PARA CANO 1
-				vga_char(15 downto 12) <= "0000";
-				vga_char(11 downto 8) <= CANO1_COLOR;
-				vga_char(7 downto 0) <= CANO1_CHAR;
-
-				vga_pos(15 downto 0) <= CANO1_POS;
-				CANO1_POSA <= CANO1_POS; -- Atualizar posição
-
-				videoflag <= '1';
 				VIDEOE <= x"09";
-
-				
-				-- Intermediário DESENHAR CANO 1 -> APAGAR FLIPPY
+			
+			-- Apagar na Vertical
 			WHEN x"09" =>
-				videoflag <= '0';
-				VIDEOE <= x"00"; -- VOLTANDO PARA O APAGAR FLIPPY
+				vga_char(15 downto 12) <= "0000";		
+				vga_char(11 downto 8) <= "1110"; -- Azul - Cor do Fundo
+				vga_char(7 downto 0) <= "00000000"; -- Primeiro char - quadrado;				
+				vga_pos(15 downto 0)	<= CANO_VECTOR(INDEX_CANO) - CANO_OFFSET + x"01"; -- Apagar posição anterior
+				videoflag <= '1';
 
-			-------------------------------------------------
-			-- Desenhar Cenário
-			-------------------------------------------------
-
+				VIDEOE <= x"10";
+			
+			-- Transição
+			WHEN x"10" =>
+				IF(INDEX_CANO < 8) THEN -- Ainda não terminou de apagar
+					INDEX_CANO <= INDEX_CANO + 1;
+					VIDEOE <= x"09"; -- Continuar apagando
+				ELSE
+					INDEX_CANO <= 0; -- Terminou de apagar, volta para ciclo do Flippy
+					VIDEOE <= x"00";
+				END IF;
+			
 			WHEN OTHERS =>
 				videoflag <= '0';
 				VIDEOE <= x"00";
