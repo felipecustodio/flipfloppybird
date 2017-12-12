@@ -35,7 +35,7 @@ ARCHITECTURE a OF notepad IS
 	TYPE vector_screen IS ARRAY(0 to 1200) of STD_LOGIC_VECTOR(15 DOWNTO 0); -- Vetor de posições da tela inteira
 	
 	-- Resetar tela
-	SIGNAL RESET_INDEX : STD_LOGIC_VECTOR(15 DOWNTO 0);
+	SIGNAL RESET_POS : STD_LOGIC_VECTOR(15 DOWNTO 0); -- Armazena 1 posição
 
 	-------------------------------------------------
 	-- FLIPPY
@@ -43,8 +43,8 @@ ARCHITECTURE a OF notepad IS
 	-- Flippy
 	SIGNAL FLIPPY_POS   : STD_LOGIC_VECTOR(15 DOWNTO 0); -- Posição atual
 	SIGNAL FLIPPY_POS_PREV  : STD_LOGIC_VECTOR(15 DOWNTO 0); -- Posição anterior
-	SIGNAL FLIPPY_CHAR  : STD_LOGIC_VECTOR(7 DOWNTO 0);
-	SIGNAL FLIPPY_COLOR : STD_LOGIC_VECTOR(3 DOWNTO 0);
+	SIGNAL FLIPPY_CHAR  : STD_LOGIC_VECTOR(7 DOWNTO 0); -- Charmap
+	SIGNAL FLIPPY_COLOR : STD_LOGIC_VECTOR(3 DOWNTO 0); -- Cor
 	SIGNAL FLIPPY_FLAG  : STD_LOGIC_VECTOR(7 DOWNTO 0); -- Vivo 0 / Morto 1
 
 	-- Estado atual do Flippy
@@ -76,7 +76,7 @@ ARCHITECTURE a OF notepad IS
 	SIGNAL PIPE4_INDEX  	 : integer;
 	SIGNAL PIPE5_INDEX  	 : integer;
 	
-	SIGNAL PIPE_POS   : STD_LOGIC_VECTOR(15 DOWNTO 0);
+	-- Movimentação
 	SIGNAL PIPE_OFFSET   : STD_LOGIC_VECTOR(15 DOWNTO 0);
 
 	-- Estado atual do cano
@@ -88,6 +88,9 @@ ARCHITECTURE a OF notepad IS
 	-- Flag para mudar tipo de cano
 	SIGNAL PIPE_TYPE : integer;
 
+	-- Flag de vitória
+	SIGNAL FLIPPY_VICTORY : integer;
+
 	-------------------------------------------------
 	-- TEXTOS
 	-------------------------------------------------
@@ -96,17 +99,16 @@ ARCHITECTURE a OF notepad IS
 	SIGNAL INDEX_GAMEOVER  	 : integer;
 	SIGNAL POSITION_GAMEOVER   : STD_LOGIC_VECTOR(15 DOWNTO 0);
 
-	-- Flippy Title
+	-- Flippy
 	SIGNAL TITLE : vector;
 	SIGNAL INDEX_TITLE  	 : integer;
 	SIGNAL POSITION_TITLE   : STD_LOGIC_VECTOR(15 DOWNTO 0);
 
-	-- Scoreboard
-	SIGNAL SCORE : vector;
-	SIGNAL INDEX_SCORE  	 : integer;
-	SIGNAL POSITION_SCORE   : STD_LOGIC_VECTOR(15 DOWNTO 0);
+	-- Vitória
+	SIGNAL VICTORY : vector;
+	SIGNAL INDEX_VICTORY : integer;
+	SIGNAL POSITION_VICTORY : STD_LOGIC_VECTOR(15 DOWNTO 0);
 
-	--DESENHAR ARRAY
 	-------------------------------------------------
 
 -------------------------------------------------
@@ -128,6 +130,7 @@ PROCESS (clk, reset)
 		FLIPPY_DELAY <= x"00000000";
 		FLIPPY_STATE <= x"00";
 		FLIPPY_FLAG <= x"00"; -- 0: VIVO / 1: MORTO
+		FLIPPY_VICTORY <= 0; -- 0: JOGANDO / 1: GANHOU
 
 	ELSIF (clk'event) and (clk = '1') THEN
 
@@ -165,6 +168,7 @@ PROCESS (clk, reset)
 						FLIPPY_DELAY <= x"00000000";
 						FLIPPY_STATE <= x"00";
 						FLIPPY_FLAG <= x"00"; -- PARA SABER QUANDO ACABAR O JOGO 0: VIVO / 1: MORTO
+						FLIPPY_VICTORY <= 0;
 						FLIPPY_STATE <= x"02";
 					WHEN OTHERS =>
 				END CASE;
@@ -173,7 +177,7 @@ PROCESS (clk, reset)
 			
 			CASE PIPE_TYPE IS
 			
-				WHEN 0 =>
+				WHEN 1 =>
 					for I in 0 to 58 loop
 						if (FLIPPY_POS = PIPE1_VECTOR(I) - PIPE_OFFSET) then
 							-- COLIDIU!
@@ -182,7 +186,7 @@ PROCESS (clk, reset)
 						end if;
 					end loop;
 				
-				WHEN 1 =>
+				WHEN 2 =>
 					for I in 0 to 57 loop
 						if (FLIPPY_POS = PIPE2_VECTOR(I) - PIPE_OFFSET) then
 							-- COLIDIU!
@@ -191,7 +195,7 @@ PROCESS (clk, reset)
 						end if;
 					end loop;
 					
-				WHEN 2 =>
+				WHEN 3 =>
 					for I in 0 to 63 loop
 						if (FLIPPY_POS = PIPE3_VECTOR(I) - PIPE_OFFSET) then
 							-- COLIDIU!
@@ -200,7 +204,7 @@ PROCESS (clk, reset)
 						end if;
 					end loop;
 				
-				WHEN 3 =>
+				WHEN 4 =>
 					for I in 0 to 66 loop
 						if (FLIPPY_POS = PIPE4_VECTOR(I) - PIPE_OFFSET) then
 							-- COLIDIU!
@@ -273,14 +277,10 @@ PROCESS (clk, reset)
 				IF (PIPE_OFFSET > x"0022") THEN -- Limite esquerdo
 				
 					IF (PIPE_TYPE = 4) THEN -- Máximo de canos, vitória
+						FLIPPY_VICTORY <= 1;
 						PIPE_TYPE <= 0;
 					ELSE
-						IF (PIPE_TYPE > 0) THEN
-							PIPE_TYPE <= PIPE_TYPE + 1; -- Mudar tipo de cano
-						ELSE
-							PIPE_TYPE <= 0;
-						END IF;
-						
+						PIPE_TYPE <= PIPE_TYPE + 1; -- Mudar tipo de cano
 					END IF;
 					PIPE_OFFSET <= x"0000"; -- Resetar OFFSET
 				END IF;
@@ -316,7 +316,7 @@ BEGIN
 		-------------------------------------------------
 		VIDEOE <= x"30";
 		videoflag <= '0';
-		RESET_INDEX <= x"0000";
+		RESET_POS <= x"0000";
 
 		-------------------------------------------------
 		-- Inicializar Flippy
@@ -339,8 +339,21 @@ BEGIN
 
 		--SETAR INDEX E POS INICIAL
 		INDEX_GAMEOVER <= 0;
-		POSITION_GAMEOVER <= x"0241"; -- Meio da tela
-		
+		POSITION_GAMEOVER <= x"023F"; -- Meio da tela
+
+		-- YOU WIN
+		VICTORY(0) <= "01011001" -- y
+		VICTORY(1) <= "01001111" -- o
+		VICTORY(2) <= "01010101" -- u
+		VICTORY(3) <= "00000000" --  
+		VICTORY(4) <= "01010111" -- w
+		VICTORY(5) <= "01001001" -- i
+		VICTORY(6) <= "01001110" -- n
+
+		--SETAR INDEX E POS INICIAL
+		INDEX_VICTORY <= 0;
+		POSITION_VICTORY <= x"0240"; -- Meio da tela
+
 		-- TÍTULO / BANNER
 		TITLE <= (OTHERS=>"00000000");
 		TITLE(0) <= "01000110"; -- f
@@ -365,17 +378,6 @@ BEGIN
 		--SETAR INDEX E POS INICIAL
 		INDEX_TITLE <= 0;
 		POSITION_TITLE <= x"002C"; -- Topo da tela
-
-		-- INITIALIZE SCORE
-		SCORE(0) <= "01010011"; -- s
-		SCORE(1) <= "01000011"; -- c
-		SCORE(2) <= "01001111"; -- o
-		SCORE(3) <= "01010010"; -- r
-		SCORE(4) <= "01000101"; -- e
-
-		--SETAR INDEX E POS INICIAL
-		INDEX_SCORE <= 0;
-		POSITION_SCORE <= x"0464"; -- Base da tela
 		
 		-------------------------------------------------
 		-- Inicializar Canos
@@ -916,7 +918,7 @@ BEGIN
 				vga_char(15 downto 12) <= "0000";		
 				vga_char(11 downto 8) <= "1110"; -- Azul - Cor do Fundo
 				vga_char(7 downto 0) <= "00000000";	-- Quadrado preenchido			
-				vga_pos(15 downto 0)	<= RESET_INDEX;
+				vga_pos(15 downto 0)	<= RESET_POS;
 				videoflag <= '1';
 
 				VIDEOE <= x"31";
@@ -925,11 +927,11 @@ BEGIN
 			WHEN x"31" =>
 				videoflag <= '0';
 
-				IF(RESET_INDEX > x"04AF") THEN
-					RESET_INDEX <= x"0000";
+				IF(RESET_POS > x"04AF") THEN
+					RESET_POS <= x"0000";
 					VIDEOE <= x"00";
 				ELSE
-					RESET_INDEX <= RESET_INDEX + x"01";
+					RESET_POS <= RESET_POS + x"01";
 					VIDEOE <= x"30";
 				END IF;
 			
@@ -941,10 +943,17 @@ BEGIN
 			WHEN x"00" =>
 
 				if(FLIPPY_POS_PREV = FLIPPY_POS) then -- Apenas apagar quando muda de posição
-					IF (FLIPPY_FLAG = x"01") THEN -- Se estiver morto, ir p/ desenhar Game Over
-						VIDEOE <= x"04";
+
+					-- Checar vitória
+					IF (FLIPPY_VICTORY = 1) THEN
+						VIDEOE <= x"34";
 					ELSE
-						VIDEOE <= x"00";
+						-- Checar game over
+						IF (FLIPPY_FLAG = x"01") THEN -- Se estiver morto, ir p/ desenhar Game Over
+							VIDEOE <= x"04";
+						ELSE
+							VIDEOE <= x"00";
+						END IF;
 					END IF;
 					
 				else
@@ -1001,12 +1010,12 @@ BEGIN
 					VIDEOE <= x"05";
 				END IF;
 
-			-- Intermediário Game Over -> Canos
+			-- Intermediário
 			WHEN x"05" =>
 				videoflag <= '0';
 
-				IF(POSITION_GAMEOVER > x"024A") THEN
-					POSITION_GAMEOVER <= x"023C";
+				IF(POSITION_GAMEOVER > x"0247") THEN
+					POSITION_GAMEOVER <= x"023F";
 					INDEX_GAMEOVER <= 0;
 				ELSE
 					POSITION_GAMEOVER <= POSITION_GAMEOVER + x"01";
@@ -1014,6 +1023,35 @@ BEGIN
 					VIDEOE <= x"04";
 				END IF;
 				VIDEOE <= x"04";
+
+			WHEN x"34" => -- Desenha YOU WIN na tela
+
+				vga_char(15 downto 12) <= "0000";		
+				vga_char(11 downto 8) <= "1110"; -- Azul - Cor do Fundo
+				vga_char(7 downto 0) <= VICTORY(INDEX_VICTORY);				
+				vga_pos(15 downto 0)	<= POSITION_VICTORY;
+				
+				videoflag <= '1';
+				
+				IF (FLIPPY_VICTORY = x"00") THEN -- Flippy reviveu, resetar tela
+					VIDEOE <= x"30";
+				ELSE
+					VIDEOE <= x"35";
+				END IF;
+
+			-- Intermediário Victory -> Resetar Tela
+			WHEN x"35" =>
+				videoflag <= '0';
+
+				IF(POSITION_VICTORY > x"0246") THEN
+					POSITION_VICTORY <= x"0240";
+					INDEX_VICTORY <= 0;
+				ELSE
+					POSITION_VICTORY <= POSITION_VICTORY + x"01";
+					INDEX_VICTORY <= INDEX_VICTORY + 1;
+					VIDEOE <= x"34";
+				END IF;
+				VIDEOE <= x"34";
 
 			-------------------------------------------------
 			-- Desenhar Canos
@@ -1026,23 +1064,23 @@ BEGIN
 				
 				CASE PIPE_TYPE IS
 					
-					WHEN 0 =>
+					WHEN 1 =>
 						vga_char(7 downto 0) <= "00000000"; -- Primeiro char - quadrado;				
 						vga_pos(15 downto 0)	<= PIPE1_VECTOR(PIPE1_INDEX) - PIPE_OFFSET;
 						
-					WHEN 1 =>
+					WHEN 2 =>
 						vga_char(7 downto 0) <= "00000000"; -- Primeiro char - quadrado;				
 						vga_pos(15 downto 0)	<= PIPE2_VECTOR(PIPE2_INDEX) - PIPE_OFFSET;
 				
-					WHEN 2 =>
+					WHEN 3 =>
 						vga_char(7 downto 0) <= "00000000"; -- Primeiro char - quadrado;				
 						vga_pos(15 downto 0)	<= PIPE3_VECTOR(PIPE3_INDEX) - PIPE_OFFSET;
 					
-					WHEN 3 =>
+					WHEN 4 =>
 						vga_char(7 downto 0) <= "00000000"; -- Primeiro char - quadrado;				
 						vga_pos(15 downto 0)	<= PIPE4_VECTOR(PIPE4_INDEX) - PIPE_OFFSET;
 						
-					WHEN 4 =>
+					WHEN 5 =>
 						vga_char(7 downto 0) <= "00000000"; -- Primeiro char - quadrado;				
 						vga_pos(15 downto 0)	<= PIPE5_VECTOR(PIPE5_INDEX) - PIPE_OFFSET;
 			
@@ -1059,7 +1097,7 @@ BEGIN
 			
 				CASE PIPE_TYPE IS
 				
-					WHEN 0 =>
+					WHEN 1 =>
 							IF(PIPE1_INDEX < 58) THEN
 								PIPE1_INDEX <= PIPE1_INDEX + 1;
 								VIDEOE <= x"06";
@@ -1068,7 +1106,7 @@ BEGIN
 								VIDEOE <= x"08";
 							END IF;
 
-					WHEN 1 =>
+					WHEN 2 =>
 							IF(PIPE2_INDEX < 57) THEN
 								PIPE2_INDEX <= PIPE2_INDEX + 1;
 								VIDEOE <= x"06";
@@ -1077,7 +1115,7 @@ BEGIN
 								VIDEOE <= x"08";
 							END IF;
 					
-					WHEN 2 =>
+					WHEN 3 =>
 							IF(PIPE3_INDEX < 63) THEN
 								PIPE3_INDEX <= PIPE3_INDEX + 1;
 								VIDEOE <= x"06";
@@ -1086,7 +1124,7 @@ BEGIN
 								VIDEOE <= x"08";
 							END IF;
 					
-					WHEN 3 =>
+					WHEN 4 =>
 							IF(PIPE4_INDEX < 66) THEN
 								PIPE4_INDEX <= PIPE4_INDEX + 1;
 								VIDEOE <= x"06";
@@ -1119,23 +1157,23 @@ BEGIN
 				
 				CASE PIPE_TYPE IS
 					
-					WHEN 0 =>
+					WHEN 1 =>
 						vga_char(7 downto 0) <= "00000000"; -- Primeiro char - quadrado;				
 						vga_pos(15 downto 0)	<= PIPE1_VECTOR(PIPE1_INDEX) - PIPE_OFFSET + x"03"; -- Apagar posição anterior
 						
-					WHEN 1 =>
+					WHEN 2 =>
 						vga_char(7 downto 0) <= "00000000"; -- Primeiro char - quadrado;				
 						vga_pos(15 downto 0)	<= PIPE2_VECTOR(PIPE2_INDEX) - PIPE_OFFSET + x"03"; -- Apagar posição anterior
 				
-					WHEN 2 =>
+					WHEN 3 =>
 						vga_char(7 downto 0) <= "00000000"; -- Primeiro char - quadrado;				
 						vga_pos(15 downto 0)	<= PIPE3_VECTOR(PIPE3_INDEX) - PIPE_OFFSET + x"03"; -- Apagar posição anterior
 					
-					WHEN 3 =>
+					WHEN 4 =>
 						vga_char(7 downto 0) <= "00000000"; -- Primeiro char - quadrado;				
 						vga_pos(15 downto 0)	<= PIPE4_VECTOR(PIPE4_INDEX) - PIPE_OFFSET + x"03"; -- Apagar posição anterior
 						
-					WHEN 4 =>
+					WHEN 5 =>
 						vga_char(7 downto 0) <= "00000000"; -- Primeiro char - quadrado;				
 						vga_pos(15 downto 0)	<= PIPE5_VECTOR(PIPE5_INDEX) - PIPE_OFFSET + x"03"; -- Apagar posição anterior
 			
@@ -1152,7 +1190,7 @@ BEGIN
 			
 				CASE PIPE_TYPE IS
 				
-					WHEN 0 =>
+					WHEN 1 =>
 							IF(PIPE1_INDEX < 58) THEN
 								PIPE1_INDEX <= PIPE1_INDEX + 1;
 								VIDEOE <= x"09";
@@ -1161,7 +1199,7 @@ BEGIN
 								VIDEOE <= x"32";
 							END IF;
 
-					WHEN 1 =>
+					WHEN 2 =>
 							IF(PIPE2_INDEX < 57) THEN
 								PIPE2_INDEX <= PIPE2_INDEX + 1;
 								VIDEOE <= x"09";
@@ -1170,7 +1208,7 @@ BEGIN
 								VIDEOE <= x"32";
 							END IF;
 					
-					WHEN 2 =>
+					WHEN 3 =>
 							IF(PIPE3_INDEX < 63) THEN
 								PIPE3_INDEX <= PIPE3_INDEX + 1;
 								VIDEOE <= x"09";
@@ -1179,7 +1217,7 @@ BEGIN
 								VIDEOE <= x"32";
 							END IF;
 					
-					WHEN 3 =>
+					WHEN 4 =>
 							IF(PIPE4_INDEX < 66) THEN
 								PIPE4_INDEX <= PIPE4_INDEX + 1;
 								VIDEOE <= x"09";
@@ -1201,6 +1239,7 @@ BEGIN
 				
 				END CASE;
 			
+			-- Apagar tela
 			WHEN x"32" => -- Apagar canto da tela (lixo do cano)
 				vga_char(15 downto 12) <= "0000";		
 				vga_char(11 downto 8) <= "1110"; -- Azul - Cor do Fundo
@@ -1211,12 +1250,13 @@ BEGIN
 				
 				VIDEOE <= x"33";
 				
+			-- Transição Apagar / Início
 			WHEN x"33" =>
-				IF (INDEX_CLEAR > 179) THEN
+				IF (INDEX_CLEAR > 179) THEN -- Terminou de apagar, voltar
 					INDEX_CLEAR <= 0;
 					VIDEOE <= x"00";
 				ELSE
-					INDEX_CLEAR <= INDEX_CLEAR + 1;
+					INDEX_CLEAR <= INDEX_CLEAR + 1; -- Continuar apagando
 					VIDEOE <= x"32";
 				END IF;
 										
